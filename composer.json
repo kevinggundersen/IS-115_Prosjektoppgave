@@ -1,0 +1,5 @@
+{
+    "require": {
+        "google-gemini-php/client": "2.0"
+    }
+}
