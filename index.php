@@ -15,12 +15,27 @@ $client = (new Factory())->withApiKey($yourApiKey)->make();
 
 // Check if form was submitted and get the input value
 $userInput = '';
+$result = '';
+
 if ($_POST && isset($_POST['name'])) {
     $userInput = $_POST['name'];
     $result = $client->generativeModel(model: 'gemini-2.0-flash')->generateContent($userInput);
-    echo $result->text() . "<br>";
-} else {
-    echo "Please enter some text and submit the form.";
+    
+    // Store result in session and redirect to prevent resubmission
+    session_start();
+    $_SESSION['result'] = $result->text();
+    $_SESSION['userInput'] = $userInput;
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit();
+}
+
+// Check if we have a result from session (after redirect)
+session_start();
+if (isset($_SESSION['result'])) {
+    $result = $_SESSION['result'];
+    $userInput = $_SESSION['userInput'];
+    unset($_SESSION['result']);
+    unset($_SESSION['userInput']);
 }
 ?>
 
@@ -33,8 +48,19 @@ if ($_POST && isset($_POST['name'])) {
 
     <body>
         <h1>IS-115 - Prosjektoppgave</h1>
+        
+        <?php if ($result): ?>
+            <div style="background-color: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                <strong>You:</strong> <?php echo htmlspecialchars($userInput); ?><br><br>
+                <strong>Response:</strong><br>
+                <?php echo nl2br(htmlspecialchars($result)); ?>
+            </div>
+        <?php else: ?>
+            <p>Please enter some text and submit the form.</p>
+        <?php endif; ?>
+        
         <form action="index.php" method="post">
-            <input type='text' name="name" value='myName'>
+            <input type='text' name="name" placeholder='Enter your text here...'>
             <button type="submit">Submit</button>
         </form>
     </body>
