@@ -18,6 +18,9 @@ $client = (new Factory())->withApiKey($yourApiKey)->make();
 // Start session
 session_start();
 
+// Initialize Parsedown for markdown parsing
+$parsedown = new \Parsedown();
+
 // Initialize variables
 $userInput = '';
 $chatHistory = [];
@@ -49,8 +52,12 @@ if ($_POST && isset($_POST['name']) && !empty(trim($_POST['name']))) {
 
 
     // Send message to chat and get response
-    $result = $chat->sendMessage($userInput);
-    $response = $result->text();
+    try {
+        $result = $chat->sendMessage($userInput);
+        $response = $result->text();
+    } catch (Exception $e) {
+        $response = "Sorry, there was an error processing your request: " . $e->getMessage();
+    }
 
     // Add model response to history
     $_SESSION['chat_history'][] = ['role' => 'model', 'content' => $response];
@@ -82,53 +89,12 @@ if (isset($_POST['clear_chat'])) {
 
 <head>
     <title>IS-115 - Prosjektoppgave</title>
-    <style>
-        body {
-
-            margin: 20px;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .chat-area {
-            min-height: 200px;
-            max-height: 80vh;
-            border: 1px solid #ccc;
-            padding: 15px;
-            margin: 20px 0;
-            background-color: #f9f9f9;
-            line-height: 1.4;
-            font-size: 1.0rem;
-            overflow-y: scroll;
-        }
-
-        .message {
-            margin: 20px 0;
-            padding: 10px;
-            border-radius: 10px;
-        }
-        .message[role="user"] {
-            background-color:rgb(231, 231, 231);
-            text-align: left;
-            margin-left: 20vh;
-        }
-        .message[role="model"] {
-            text-align: left;
-        }
-         
-        input[type="text"] {
-            width: 70%;
-            padding: 10px;
-        }
-
-        button {
-            padding: 10px 20px;
-            margin: 5px;
-        }
-    </style>
+    <!-- External CSS -->
+    <link rel="stylesheet" href="assest/css/style.css">
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
 </head>
 
 <body>
@@ -141,7 +107,15 @@ if (isset($_POST['clear_chat'])) {
                     
                     <?php foreach ($chatHistory as $index => $message): ?>
                          <div class="message" role="<?php echo $message['role']; ?>">
-                            <?php echo nl2br(htmlspecialchars($message['content'])); ?>
+                            <?php 
+                            if ($message['role'] === 'model') {
+                                // Parse markdown for model responses
+                                echo $parsedown->text($message['content']);
+                            } else {
+                                // Escape HTML for user messages for security
+                                echo nl2br(htmlspecialchars($message['content']));
+                            }
+                            ?>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -158,5 +132,14 @@ if (isset($_POST['clear_chat'])) {
             </form>
         </div>
     </body>
+    
+    <script>
+        // Simple syntax highlighting on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof Prism !== 'undefined') {
+                Prism.highlightAll();
+            }
+        });
+    </script>
 
     </html>

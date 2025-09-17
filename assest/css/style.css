@@ -1,0 +1,150 @@
+
+body {
+
+    margin: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.chat-area {
+    min-height: 200px;
+    max-height: 80vh;
+    border: 1px solid #ccc;
+    padding: 15px;
+    margin: 20px 0;
+    background-color: #f9f9f9;
+    line-height: 1.4;
+    font-size: 1.0rem;
+    overflow-y: scroll;
+}
+
+.message {
+    margin: 20px 0;
+    padding: 10px;
+    border-radius: 10px;
+}
+.message[role="user"] {
+    background-color:rgb(231, 231, 231);
+    text-align: left;
+    margin-left: 20vh;
+}
+.message[role="model"] {
+    text-align: left;
+}
+ 
+input[type="text"] {
+    width: 70%;
+    padding: 10px;
+}
+
+button {
+    padding: 10px 20px;
+    margin: 5px;
+}
+
+/* Markdown styling */
+.message h1, .message h2, .message h3, .message h4, .message h5, .message h6 {
+    margin: 15px 0 10px 0;
+    font-weight: bold;
+}
+
+.message h1 { font-size: 1.5em; }
+.message h2 { font-size: 1.3em; }
+.message h3 { font-size: 1.2em; }
+.message h4 { font-size: 1.1em; }
+.message h5 { font-size: 1.05em; }
+.message h6 { font-size: 1em; }
+
+.message p {
+    margin: 10px 0;
+}
+
+.message code {
+    background-color: #f4f4f4;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+.message pre {
+    background-color: #2d3748;
+    padding: 15px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 15px 0;
+    border: 1px solid #4a5568;
+}
+
+.message pre code {
+    background-color: transparent;
+    padding: 0;
+    color: #e2e8f0;
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 0.9em;
+    line-height: 1.5;
+}
+
+/* Prism.js theme overrides for better integration */
+.message pre[class*="language-"] {
+    background-color: #2d3748;
+    border: 1px solid #4a5568;
+}
+
+.message code[class*="language-"] {
+    background-color: transparent;
+    color: #e2e8f0;
+}
+
+.message ul, .message ol {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.message li {
+    margin: 5px 0;
+}
+
+.message blockquote {
+    border-left: 4px solid #ddd;
+    margin: 10px 0;
+    padding-left: 15px;
+    color: #666;
+}
+
+.message table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 10px 0;
+}
+
+.message th, .message td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.message th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.message strong {
+    font-weight: bold;
+}
+
+.message em {
+    font-style: italic;
+}
+
+.message a {
+    color: #0066cc;
+    text-decoration: underline;
+}
+
+.message a:hover {
+    color: #004499;
+}
