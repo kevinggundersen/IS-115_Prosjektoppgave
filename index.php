@@ -54,8 +54,9 @@ if ($_POST && isset($_POST['name']) && !empty(trim($_POST['name']))) {
     // Add model response to history
     $_SESSION['chat_history'][] = ['role' => 'model', 'content' => $response];
     
-    // Store the last response for display
-    $lastResponse = $response;
+    // Redirect to prevent form resubmission on refresh (Post-Redirect-Get pattern)
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit();
 }
 
 // Get chat history for display
@@ -69,8 +70,9 @@ if (isset($_SESSION['chat_history'])) {
 // Handle clear chat
 if (isset($_POST['clear_chat'])) {
     unset($_SESSION['chat_history']);
-    $chatHistory = [];
-    $lastResponse = '';
+    // Redirect to prevent form resubmission on refresh
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit();
 }
 ?>
 
@@ -102,7 +104,7 @@ if (isset($_POST['clear_chat'])) {
             <input type='text' name="name" placeholder='Enter your message here...' required>
             <button type="submit">Send</button>
             <?php if (!empty($chatHistory)): ?>
-                <button type="submit" name="clear_chat">Clear Chat</button>
+                <button type="submit" name="clear_chat" formnovalidate>Clear Chat</button>
             <?php endif; ?>
         </form>
     </body>
