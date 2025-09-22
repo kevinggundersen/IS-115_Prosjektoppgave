@@ -48,6 +48,12 @@ if ($_POST && isset($_POST['name']) && !empty(trim($_POST['name']))) {
     // Set instruction type here - change this variable to switch instruction sets
     $instructionType = 'default'; // Options: 'default', 'tutor', 'debugger', 'casual'
     
+    // Add context enhancment
+    $enhancedInput = $userInput;
+    if ($instructionType === 'default') {
+        $enhancedInput = "Current date: " . date('Y-m-d') . "\n" . $userInput;
+    }
+
     // Load system instructions from config file
     $configFile = __DIR__ . "/config/instructions_{$instructionType}.txt";
     
@@ -67,7 +73,7 @@ if ($_POST && isset($_POST['name']) && !empty(trim($_POST['name']))) {
 
     // Send message to chat and get response
     try {
-        $result = $chat->sendMessage($userInput);
+        $result = $chat->sendMessage($enhancedInput);
         $response = $result->text();
     } catch (Exception $e) {
         $response = "Sorry, there was an error processing your request: " . $e->getMessage();
