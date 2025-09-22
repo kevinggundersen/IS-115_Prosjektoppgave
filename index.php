@@ -45,9 +45,23 @@ if ($_POST && isset($_POST['name']) && !empty(trim($_POST['name']))) {
         $history[] = Content::parse(part: $message['content'], role: $role);
     }
 
-    // Create a new chat object with existing history (don't store in session)
+    // Set instruction type here - change this variable to switch instruction sets
+    $instructionType = 'default'; // Options: 'default', 'tutor', 'debugger', 'casual'
+    
+    // Load system instructions from config file
+    $configFile = __DIR__ . "/config/instructions_{$instructionType}.txt";
+    
+    // Fallback to default if the requested config file doesn't exist
+    if (!file_exists($configFile)) {
+        $configFile = __DIR__ . "/config/instructions_default.txt";
+    }
+    
+    $systemInstructions = file_get_contents($configFile);
+    
+    // Create a new chat object with existing history and system instructions
     $chat = $client
         ->generativeModel(model: 'gemini-2.0-flash')
+        ->withSystemInstruction(Content::parse(part: $systemInstructions))
         ->startChat(history: $history);
 
 
