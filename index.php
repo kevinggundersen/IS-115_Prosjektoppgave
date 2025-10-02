@@ -117,6 +117,11 @@ if (isset($_SESSION['chat_history'])) {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+
+<style>
+.chat-area { max-height: 70vh; overflow-y: auto; scroll-behavior: smooth; }
+.messages-container, .message { overflow-anchor: none; }
+</style>
 </head>
 
 <body>
@@ -195,6 +200,26 @@ if (isset($_SESSION['chat_history'])) {
         const clearButton = document.getElementById('clearButton');
         const loadingIndicator = document.getElementById('loadingIndicator');
         const chatArea = document.querySelector('.chat-area');
+        // --- Pin so user's last message stays at TOP ---
+        let pinMode = 'lastUserTop';     // 'lastUserTop' | 'lastUser' | 'bottom'
+        let lastUserBubble = null;       // DOM node for the user's latest message
+        
+        function scrollToBottom() {
+          if (!chatArea) return;
+          chatArea.scrollTop = chatArea.scrollHeight;
+        }
+        function scrollUserTop() {
+          if (!chatArea || !lastUserBubble) return;
+          // Put user's bubble at the very top of the viewport
+          chatArea.scrollTop = lastUserBubble.offsetTop - chatArea.offsetTop;
+        }
+        function isNearBottom() {
+          const THRESH = 24;
+          if (!chatArea) return true;
+          return chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight < THRESH;
+        }
+        window.addEventListener('load', () => { scrollToBottom(); });
+        
         
         // Handle form submission
         chatForm.addEventListener('submit', function(e) {
@@ -234,6 +259,7 @@ if (isset($_SESSION['chat_history'])) {
                 if (data.success) {
                     // Add new messages to chat area
                     addMessagesToChat(data.data);
+                    if (pinMode === 'lastUserTop') { scrollUserTop(); }
                     // Clear input
                     messageInput.value = '';
                     // Show clear button if not already visible
@@ -313,6 +339,9 @@ if (isset($_SESSION['chat_history'])) {
                 messageDiv.setAttribute('role', message.role);
                 messageDiv.innerHTML = message.formatted_content;
                 messagesContainer.appendChild(messageDiv);
+                if (message.role === 'user') {
+                    lastUserBubble = messageDiv;
+                }
             });
             
             // Scroll to bottom
