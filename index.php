@@ -188,6 +188,11 @@ if (isset($_SESSION['chat_history'])) {
             Prism.highlightAll();
         }
         
+        // Set initial scroll position to bottom after content is rendered
+        setTimeout(() => {
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }, 0);
+        
         // Get DOM elements
         const chatForm = document.getElementById('chatForm');
         const messageInput = document.getElementById('messageInput');
