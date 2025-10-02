@@ -77,127 +77,11 @@ $chatHistory = [];      // Array to hold the conversation history for display
 $lastResponse = '';     // Stores the AI's last response (not currently used)
 
 /**
- * Form Processing - Handle User Input
+ * AJAX Form Processing - No longer needed in main file
  * 
- * This section processes the user's message when they submit the chat form.
- * It follows the Post-Redirect-Get (PRG) pattern to prevent form resubmission
- * when users refresh the page.
+ * Form processing has been moved to chat_ajax.php to handle AJAX requests.
+ * This allows for dynamic updates without page reloads.
  */
-if ($_POST && isset($_POST['name']) && !empty(trim($_POST['name']))) {
-    // Sanitize user input by trimming whitespace
-    $userInput = trim($_POST['name']);
-
-    /**
-     * Chat History Management
-     * 
-     * Initialize the chat history array in the session if it doesn't exist.
-     * The session stores the conversation history so it persists across page loads.
-     */
-    if (!isset($_SESSION['chat_history'])) {
-        $_SESSION['chat_history'] = [];
-    }
-
-    // Add the user's message to the conversation history
-    // We store both the role (user/model) and content for each message
-    $_SESSION['chat_history'][] = ['role' => 'user', 'content' => $userInput];
-
-    /**
-     * Convert Session History to API Format
-     * 
-     * The Gemini API expects Content objects with specific roles.
-     * We need to convert our session data format to the API's expected format.
-     */
-    $history = [];
-    foreach ($_SESSION['chat_history'] as $message) {
-        // Convert our role strings to the API's Role enum values
-        $role = $message['role'] === 'user' ? Role::USER : Role::MODEL;
-        // Create Content objects that the API can understand
-        $history[] = Content::parse(part: $message['content'], role: $role);
-    }
-
-    /**
-     * AI Personality Configuration
-     * 
-     * This variable controls which instruction set the AI will use.
-     * Different instruction sets give the AI different personalities and behaviors:
-     * - 'default': General helpful assistant
-     * - 'tutor': Programming tutor focused on education
-     * - 'debugger': Specialized in helping with code debugging
-     * - 'casual': Friendly, casual conversation style
-     */
-    $instructionType = 'default'; // Options: 'default', 'tutor', 'debugger', 'casual'
-    
-    /**
-     * Context Enhancement
-     * 
-     * Add additional context to the user's input to help the AI provide
-     * more relevant and current responses. For example, we can add the current date.
-     */
-    $enhancedInput = $userInput;
-    if ($instructionType === 'default') {
-        $enhancedInput = "Current date: " . date('Y-m-d') . "\n" . $userInput;
-    }
-
-    /**
-     * Load System Instructions
-     * 
-     * System instructions define how the AI should behave and respond.
-     * Each instruction type has its own configuration file that contains
-     * specific guidelines for the AI's personality and response style.
-     */
-    $configFile = __DIR__ . "/config/instructions_{$instructionType}.txt";
-    
-    // Fallback to default instructions if the requested config file doesn't exist
-    // This prevents errors if someone specifies an invalid instruction type
-    if (!file_exists($configFile)) {
-        $configFile = __DIR__ . "/config/instructions_default.txt";
-    }
-    
-    // Read the system instructions from the configuration file
-    $systemInstructions = file_get_contents($configFile);
-    
-    /**
-     * Create Chat Session with Gemini API
-     * 
-     * Initialize a new chat session with the Gemini API, including:
-     * - The specific model to use (gemini-2.0-flash)
-     * - System instructions that define the AI's behavior
-     * - Conversation history to maintain context
-     */
-    $chat = $client
-        ->generativeModel(model: 'gemini-2.0-flash')  // Use the latest Gemini model
-        ->withSystemInstruction(Content::parse(part: $systemInstructions))  // Set AI personality
-        ->startChat(history: $history);  // Include conversation history for context
-
-    /**
-     * Send Message and Handle Response
-     * 
-     * Send the user's message to the AI and handle the response.
-     * We use try-catch to gracefully handle any API errors.
-     */
-    try {
-        // Send the enhanced user input to the AI
-        $result = $chat->sendMessage($enhancedInput);
-        // Extract the text response from the API result
-        $response = $result->text();
-    } catch (Exception $e) {
-        // If there's an error, provide a user-friendly error message
-        $response = "Sorry, there was an error processing your request: " . $e->getMessage();
-    }
-
-    // Add the AI's response to the conversation history
-    $_SESSION['chat_history'][] = ['role' => 'model', 'content' => $response];
-
-    /**
-     * Post-Redirect-Get Pattern
-     * 
-     * Redirect to the same page after processing the form to prevent
-     * form resubmission when users refresh the page. This is a web development
-     * best practice that improves user experience.
-     */
-    header('Location: ' . $_SERVER['PHP_SELF']);
-    exit();
-}
 
 /**
  * Display Data Preparation
@@ -213,17 +97,10 @@ if (isset($_SESSION['chat_history'])) {
 // echo "<pre>Session data: "; print_r($_SESSION); echo "</pre>";
 
 /**
- * Clear Chat Functionality
+ * Clear Chat Functionality - Moved to AJAX
  * 
- * Handle the "Clear Chat" button click by removing all chat history
- * from the session and redirecting to prevent form resubmission.
+ * Clear chat functionality has been moved to chat_ajax.php to handle AJAX requests.
  */
-if (isset($_POST['clear_chat'])) {
-    unset($_SESSION['chat_history']);
-    // Redirect to prevent form resubmission on refresh (PRG pattern)
-    header('Location: ' . $_SERVER['PHP_SELF']);
-    exit();
-}
 ?>
 
 <!DOCTYPE html>
@@ -251,7 +128,7 @@ if (isset($_POST['clear_chat'])) {
         <!-- Chat area where conversation history is displayed -->
         <div class="chat-area">
             <?php if (!empty($chatHistory)): ?>
-                <div>
+                <div class="messages-container">
                     <!-- Loop through each message in the chat history -->
                     <?php foreach ($chatHistory as $index => $message): ?>
                          <div class="message" role="<?php echo $message['role']; ?>">
@@ -276,33 +153,237 @@ if (isset($_POST['clear_chat'])) {
         </div>
         
         <!-- Chat input form -->
-        <form action="index.php" method="post">
+        <form id="chatForm">
             <!-- Text input for user messages -->
-            <input type='text' name="name" placeholder='Enter your message here...' required>
+            <input type='text' id="messageInput" name="message" placeholder='Enter your message here...' required>
             <!-- Submit button to send the message -->
-            <button type="submit">Send</button>
+            <button type="submit" id="sendButton">Send</button>
             
             <!-- Clear chat button - only show if there's conversation history -->
             <?php if (!empty($chatHistory)): ?>
-                <button type="submit" name="clear_chat" formnovalidate>Clear Chat</button>
+                <button type="button" id="clearButton">Clear Chat</button>
             <?php endif; ?>
         </form>
+        
+        <!-- Loading indicator -->
+        <div id="loadingIndicator" style="display: none; margin: 10px 0; color: #666;">
+            <em>AI is thinking...</em>
+        </div>
     </div>
 </body>
 
-<!-- JavaScript for syntax highlighting -->
+<!-- JavaScript for AJAX functionality and syntax highlighting -->
 <script>
     /**
-     * Initialize syntax highlighting when the page loads
+     * AJAX Chat Application
      * 
-     * This script runs after the page is fully loaded and applies
-     * syntax highlighting to any code blocks in the chat messages.
-     * Prism.js automatically detects code blocks and applies appropriate styling.
+     * This script handles all the AJAX functionality for the chat application,
+     * including sending messages, receiving responses, and updating the UI
+     * without page reloads.
      */
+    
     document.addEventListener('DOMContentLoaded', function() {
-        // Check if Prism.js is loaded before trying to use it
+        // Initialize syntax highlighting
         if (typeof Prism !== 'undefined') {
             Prism.highlightAll();
+        }
+        
+        // Get DOM elements
+        const chatForm = document.getElementById('chatForm');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const clearButton = document.getElementById('clearButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const chatArea = document.querySelector('.chat-area');
+        
+        // Handle form submission
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            sendMessage();
+        });
+        
+        // Handle clear chat button
+        if (clearButton) {
+            clearButton.addEventListener('click', function() {
+                clearChat();
+            });
+        }
+        
+        /**
+         * Send a message to the AI via AJAX
+         */
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            // Disable form and show loading
+            setLoadingState(true);
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('action', 'send_message');
+            formData.append('message', message);
+            
+            // Send AJAX request
+            fetch('chat_ajax.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Add new messages to chat area
+                    addMessagesToChat(data.data);
+                    // Clear input
+                    messageInput.value = '';
+                    // Show clear button if not already visible
+                    showClearButton();
+                } else {
+                    showError(data.error || 'An error occurred');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Network error occurred');
+            })
+            .finally(() => {
+                setLoadingState(false);
+            });
+        }
+        
+        /**
+         * Clear the chat history via AJAX
+         */
+        function clearChat() {
+            if (!confirm('Are you sure you want to clear the chat?')) {
+                return;
+            }
+            
+            setLoadingState(true);
+            
+            const formData = new FormData();
+            formData.append('action', 'clear_chat');
+            
+            fetch('chat_ajax.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Clear chat area
+                    chatArea.innerHTML = '<p>Start a conversation by entering a message below.</p>';
+                    // Hide clear button
+                    hideClearButton();
+                } else {
+                    showError(data.error || 'Failed to clear chat');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Network error occurred');
+            })
+            .finally(() => {
+                setLoadingState(false);
+            });
+        }
+        
+        /**
+         * Add new messages to the chat area
+         */
+        function addMessagesToChat(messages) {
+            // Remove welcome message if it exists
+            const welcomeMessage = chatArea.querySelector('p');
+            if (welcomeMessage && welcomeMessage.textContent.includes('Start a conversation')) {
+                welcomeMessage.remove();
+            }
+            
+            // Create messages container if it doesn't exist
+            let messagesContainer = chatArea.querySelector('.messages-container');
+            if (!messagesContainer) {
+                messagesContainer = document.createElement('div');
+                messagesContainer.className = 'messages-container';
+                chatArea.appendChild(messagesContainer);
+            }
+            
+            // Add each new message
+            messages.forEach(message => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                messageDiv.setAttribute('role', message.role);
+                messageDiv.innerHTML = message.formatted_content;
+                messagesContainer.appendChild(messageDiv);
+            });
+            
+            // Scroll to bottom
+            chatArea.scrollTop = chatArea.scrollHeight;
+            
+            // Re-apply syntax highlighting
+            if (typeof Prism !== 'undefined') {
+                Prism.highlightAll();
+            }
+        }
+        
+        /**
+         * Set loading state for the form
+         */
+        function setLoadingState(loading) {
+            sendButton.disabled = loading;
+            messageInput.disabled = loading;
+            if (clearButton) clearButton.disabled = loading;
+            
+            if (loading) {
+                loadingIndicator.style.display = 'block';
+                sendButton.textContent = 'Sending...';
+            } else {
+                loadingIndicator.style.display = 'none';
+                sendButton.textContent = 'Send';
+            }
+        }
+        
+        /**
+         * Show error message
+         */
+        function showError(message) {
+            // Create or update error message
+            let errorDiv = document.getElementById('errorMessage');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.id = 'errorMessage';
+                errorDiv.style.cssText = 'color: red; margin: 10px 0; padding: 10px; background-color: #ffe6e6; border: 1px solid #ffcccc; border-radius: 5px;';
+                chatForm.parentNode.insertBefore(errorDiv, chatForm);
+            }
+            errorDiv.textContent = 'Error: ' + message;
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                if (errorDiv) {
+                    errorDiv.remove();
+                }
+            }, 5000);
+        }
+        
+        /**
+         * Show clear button
+         */
+        function showClearButton() {
+            if (!clearButton) {
+                const newClearButton = document.createElement('button');
+                newClearButton.type = 'button';
+                newClearButton.id = 'clearButton';
+                newClearButton.textContent = 'Clear Chat';
+                newClearButton.addEventListener('click', clearChat);
+                chatForm.appendChild(newClearButton);
+            }
+        }
+        
+        /**
+         * Hide clear button
+         */
+        function hideClearButton() {
+            if (clearButton) {
+                clearButton.remove();
+            }
         }
     });
 </script>
