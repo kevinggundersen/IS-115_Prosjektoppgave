@@ -95,7 +95,7 @@ function handleSendMessage($client, $parsedown) {
     }
     
     // Set instruction type (same as main file)
-    $instructionType = 'mealplanner';
+    $instructionType = 'default';
     
     // Load system instructions
     $configFile = __DIR__ . "/config/instructions_{$instructionType}.txt";

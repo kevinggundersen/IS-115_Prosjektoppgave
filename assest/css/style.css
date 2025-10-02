@@ -36,6 +36,7 @@ body {
     line-height: 1.4;      /* Improved line spacing for readability */
     font-size: 1.0rem;     /* Standard font size */
     overflow-y: scroll;    /* Enable vertical scrolling when content overflows */
+    scroll-behavior: smooth; /* Smooth scrolling animation */
 }
 
 /* Base message styling - applies to all chat messages */

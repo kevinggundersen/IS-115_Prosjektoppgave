@@ -168,7 +168,7 @@ if (isset($_SESSION['chat_history'])) {
         <!-- Loading indicator -->
         <div id="loadingIndicator" style="display: none; margin: 10px 0; color: #666;">
             <em>AI is thinking...</em>
-        </div>
+        </div>  
     </div>
 </body>
 
@@ -315,8 +315,9 @@ if (isset($_SESSION['chat_history'])) {
                 messagesContainer.appendChild(messageDiv);
             });
             
-            // Scroll to bottom
-            chatArea.scrollTop = chatArea.scrollHeight;
+            // Scroll to the last user message
+            scrollToLastUserMessage();
+            
             
             // Re-apply syntax highlighting
             if (typeof Prism !== 'undefined') {
@@ -385,6 +386,41 @@ if (isset($_SESSION['chat_history'])) {
                 clearButton.remove();
             }
         }
+        
+        /**
+         * Scroll to the last user message
+         */
+        function scrollToLastUserMessage() {
+            const userMessages = chatArea.querySelectorAll('.message[role="user"]');
+            if (userMessages.length > 0) {
+                const lastUserMessage = userMessages[userMessages.length - 1];
+                
+                // Calculate the position of the user message relative to the chat area's content
+                const messagesContainer = chatArea.querySelector('.messages-container');
+                let targetScrollTop;
+                
+                if (messagesContainer) {
+                    // Get the position of the message relative to the messages container
+                    const messageOffsetTop = lastUserMessage.offsetTop - messagesContainer.offsetTop;
+                    targetScrollTop = messageOffsetTop;
+                } else {
+                    // Fallback: use the message's position relative to chat area
+                    targetScrollTop = lastUserMessage.offsetTop;
+                }
+                
+                chatArea.scrollTo({
+                    top: Math.max(0, targetScrollTop),
+                    behavior: 'smooth'
+                });
+            } else {
+                // Fallback to bottom if no user messages
+                chatArea.scrollTo({
+                    top: chatArea.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }
+        }
+        
     });
 </script>
 
