@@ -151,10 +151,13 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
     <div class="container">
         <h1>IS-115 - Prosjektoppgave</h1>
         
+        <!-- Sidebar toggle button for mobile/tablet -->
+        <button id="sidebarToggle" class="sidebar-toggle">☰ Sessions</button>
+        
         <!-- Main layout with sidebar and chat area -->
         <div class="main-layout">
             <!-- Sidebar for session history -->
-            <div class="sidebar">
+            <div class="sidebar" id="sidebar">
                 <div class="sidebar-header">
                     <button id="newChatButton" class="new-chat-btn">+ Ny Chat</button>
                 </div>
@@ -238,6 +241,8 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
         const chatArea = document.getElementById('chatArea');
         const newChatButton = document.getElementById('newChatButton');
         const sessionList = document.getElementById('sessionList');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
         
         // Add click handlers to existing session items
         addSessionClickHandlers();
@@ -252,6 +257,13 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
         newChatButton.addEventListener('click', function() {
             createNewSession();
         });
+        
+        // Handle sidebar toggle
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function() {
+                toggleSidebar();
+            });
+        }
         
         /**
          * Send a message to the AI via AJAX
@@ -630,6 +642,22 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                     top: chatArea.scrollHeight,
                     behavior: 'smooth'
                 });
+            }
+        }
+        
+        /**
+         * Toggle sidebar visibility on mobile/tablet
+         */
+        function toggleSidebar() {
+            if (sidebar) {
+                sidebar.classList.toggle('show');
+                
+                // Update button text based on sidebar state
+                if (sidebar.classList.contains('show')) {
+                    sidebarToggle.textContent = '✕ Hide Sessions';
+                } else {
+                    sidebarToggle.textContent = '☰ Sessions';
+                }
             }
         }
         

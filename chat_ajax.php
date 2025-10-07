@@ -324,11 +324,6 @@ function handleDeleteSession() {
         sendResponse(false, null, 'Session not found');
     }
     
-    // Don't allow deleting the current session
-    if (isset($_SESSION['current_session_id']) && $_SESSION['current_session_id'] === $sessionId) {
-        sendResponse(false, null, 'Cannot delete the current session');
-    }
-    
     // Remove the session
     unset($_SESSION['sessions'][$sessionId]);
     
