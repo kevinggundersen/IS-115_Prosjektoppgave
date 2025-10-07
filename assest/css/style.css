@@ -21,22 +21,129 @@ body {
 
 /* Main container - centers content and sets maximum width for readability */
 .container {
-    max-width: 800px;  /* Limit width for better readability on large screens */
+    max-width: 100vh;  /* Increased width to accommodate sidebar */
     margin: 0 auto;    /* Center the container horizontally */
+}
+
+/* Main layout container for sidebar and chat area */
+.main-layout {
+    display: flex;
+    gap: 20px;
+    min-height: 80vh;
+}
+
+/* Sidebar styling */
+.sidebar {
+    width: 300px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    flex-shrink: 0;
+}
+
+.sidebar-header {
+    margin-bottom: 15px;
+}
+
+.new-chat-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #5e5e5e;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.new-chat-btn:hover {
+    background-color: #858585;
+}
+
+.session-list {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.session-item {
+    padding: 12px;
+    margin-bottom: 8px;
+    background-color: white;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.session-item:hover {
+    background-color: #f8f9fa;
+    border-color: #474747;
+}
+
+.session-item.active {
+    background-color: #eeeeee;
+    border-color: #3b3b3b;
+}
+
+.session-title {
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: #333;
+    word-wrap: break-word;
+}
+
+.session-date {
+    font-size: 12px;
+    color: #666;
+}
+
+.session-delete {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgb(255, 255, 255);
+    border-radius: 20%;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    font-size: 24px;
+    padding: 2px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.session-item:hover .session-delete {
+    opacity: 1;
+}
+
+.session-delete:hover {
+    color: #a71e2a;
+}
+
+/* Chat container */
+.chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Chat area - the main conversation display area */
 .chat-area {
-    min-height: 200px;     /* Ensure minimum height even when empty */
-    max-height: 80vh;      /* Limit height to 80% of viewport height */
+    height: 83vh;          /* Set height to 83% of viewport height */
+    max-height: 83vh;      /* Ensure it doesn't exceed 83% of viewport */
     border: 1px solid #ccc; /* Subtle border to define the chat area */
     padding: 15px;         /* Internal spacing for content */
-    margin: 20px 0;        /* External spacing above and below */
+    margin-bottom: 20px;   /* External spacing below */
     background-color: #f9f9f9; /* Light gray background for contrast */
     line-height: 1.4;      /* Improved line spacing for readability */
     font-size: 1.0rem;     /* Standard font size */
-    overflow-y: scroll;    /* Enable vertical scrolling when content overflows */
+    overflow-y: auto;      /* Enable vertical scrolling when content overflows */
     scroll-behavior: smooth; /* Smooth scrolling animation */
+    border-radius: 8px;    /* Rounded corners */
 }
 
 /* Base message styling - applies to all chat messages */
@@ -59,16 +166,39 @@ body {
     /* No special background - uses default white/transparent */
 }
 
+#chatForm {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
 /* Text input field styling */
 input[type="text"] {
-    width: 70%;            /* Take up 70% of available width */
-    padding: 10px;         /* Internal padding for comfortable typing */
+width: 88%;            /* Take up 70% of available width */
+         /* Internal padding for comfortable typing */
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    margin-right: 10px;
+
 }
 
 /* Button styling - applies to all buttons (Send, Clear Chat) */
-button {
-    padding: 10px 20px;    /* Internal padding for comfortable clicking */
-    margin: 5px;           /* Small spacing between buttons */
+#sendButton {
+    background-color: #f8f9fa;
+    border: 1px solid #4d4d4d;
+    border-radius: 8px;
+    padding: 15px;
+    flex-shrink: 0;
+}
+#sendButton:hover {
+    background-color: #e4e4e4;
+    border: 1px solid #4d4d4d;
+    border-radius: 8px;
+    padding: 15px;
+    flex-shrink: 0;
 }
 
 /**

@@ -23,6 +23,9 @@
 // This automatically loads all the packages defined in composer.json
 require_once 'vendor/autoload.php';
 
+// Include session management functions
+require_once 'includes/session_functions.php';
+
 // Import necessary classes from the Google Gemini PHP client library
 use Gemini\Enums\ModelVariation;  // For model variations (not used in current implementation)
 use Gemini\GeminiHelper;          // Helper functions for Gemini API
@@ -93,6 +96,30 @@ if (isset($_SESSION['chat_history'])) {
     $chatHistory = $_SESSION['chat_history'];
 }
 
+
+// Initialize sessions
+initializeSessions();
+
+// Initialize current session if it doesn't exist
+if (!isset($_SESSION['current_session_id']) && !empty($chatHistory)) {
+    $sessionId = uniqid('session_', true);
+    $sessionTitle = createSessionTitle($chatHistory);
+    
+    $_SESSION['sessions'][$sessionId] = [
+        'id' => $sessionId,
+        'title' => $sessionTitle,
+        'created_at' => date('Y-m-d H:i:s'),
+        'updated_at' => date('Y-m-d H:i:s'),
+        'messages' => $chatHistory
+    ];
+    
+    $_SESSION['current_session_id'] = $sessionId;
+}
+
+// Get current session data for rendering
+$allSessions = getAllSessions();
+$currentSessionId = $_SESSION['current_session_id'] ?? null;
+
 // Debug: Uncomment the line below to see session data for debugging
 // echo "<pre>Session data: "; print_r($_SESSION); echo "</pre>";
 
@@ -123,52 +150,62 @@ if (isset($_SESSION['chat_history'])) {
     <!-- Main container for the entire application -->
     <div class="container">
         <h1>IS-115 - Prosjektoppgave</h1>
-        <h3>Conversation History:</h3>
         
-        <!-- Chat area where conversation history is displayed -->
-        <div class="chat-area">
-            <?php if (!empty($chatHistory)): ?>
-                <div class="messages-container">
-                    <!-- Loop through each message in the chat history -->
-                    <?php foreach ($chatHistory as $index => $message): ?>
-                         <div class="message" role="<?php echo $message['role']; ?>">
-                            <?php 
-                            if ($message['role'] === 'model') {
-                                // Parse markdown for AI responses to enable rich formatting
-                                // This allows the AI to use headers, code blocks, lists, etc.
-                                echo $parsedown->text($message['content']);
-                            } else {
-                                // Escape HTML for user messages to prevent XSS attacks
-                                // nl2br converts newlines to <br> tags for proper display
-                                echo nl2br(htmlspecialchars($message['content']));
-                            }
-                            ?>
-                        </div>
-                    <?php endforeach; ?>
+        <!-- Main layout with sidebar and chat area -->
+        <div class="main-layout">
+            <!-- Sidebar for session history -->
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <button id="newChatButton" class="new-chat-btn">+ Ny Chat</button>
                 </div>
-            <?php else: ?>
-                <!-- Show welcome message when no conversation history exists -->
-                <p>Start a conversation by entering a message below.</p>
-            <?php endif; ?>
-        </div>
-        
-        <!-- Chat input form -->
-        <form id="chatForm">
-            <!-- Text input for user messages -->
-            <input type='text' id="messageInput" name="message" placeholder='Enter your message here...' required>
-            <!-- Submit button to send the message -->
-            <button type="submit" id="sendButton">Send</button>
+                <div class="session-list" id="sessionList">
+                    <?php echo renderSessionList($allSessions, $currentSessionId); ?>
+                </div>
+            </div>
             
-            <!-- Clear chat button - only show if there's conversation history -->
-            <?php if (!empty($chatHistory)): ?>
-                <button type="button" id="clearButton">Clear Chat</button>
-            <?php endif; ?>
-        </form>
-        
-        <!-- Loading indicator -->
-        <div id="loadingIndicator" style="display: none; margin: 10px 0; color: #666;">
-            <em>AI is thinking...</em>
-        </div>  
+            <!-- Main chat area -->
+            <div class="chat-container">
+                <!-- Chat area where conversation history is displayed -->
+                <div class="chat-area" id="chatArea">
+                    <?php if (!empty($chatHistory)): ?>
+                        <div class="messages-container">
+                            <!-- Loop through each message in the chat history -->
+                            <?php foreach ($chatHistory as $index => $message): ?>
+                                 <div class="message" role="<?php echo $message['role']; ?>">
+                                    <?php 
+                                    if ($message['role'] === 'model') {
+                                        // Parse markdown for AI responses to enable rich formatting
+                                        // This allows the AI to use headers, code blocks, lists, etc.
+                                        echo $parsedown->text($message['content']);
+                                    } else {
+                                        // Escape HTML for user messages to prevent XSS attacks
+                                        // nl2br converts newlines to <br> tags for proper display
+                                        echo nl2br(htmlspecialchars($message['content']));
+                                    }
+                                    ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <!-- Show welcome message when no conversation history exists -->
+                        <p>Start a conversation by entering a message below.</p>
+                    <?php endif; ?>
+                </div>
+                
+                <!-- Chat input form -->
+                <form id="chatForm">
+                    <!-- Text input for user messages -->
+                    <input type='text' id="messageInput" name="message" placeholder='Skriv meldingen din her...' required>
+                    <!-- Submit button to send the message -->
+                    <button type="submit" id="sendButton">Send</button>
+                </form>
+                
+                <!-- Loading indicator -->
+                <div id="loadingIndicator" style="display: none; margin: 10px 0; color: #666;">
+                    <em>AI is thinking...</em>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 
@@ -197,9 +234,13 @@ if (isset($_SESSION['chat_history'])) {
         const chatForm = document.getElementById('chatForm');
         const messageInput = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendButton');
-        const clearButton = document.getElementById('clearButton');
         const loadingIndicator = document.getElementById('loadingIndicator');
-        const chatArea = document.querySelector('.chat-area');
+        const chatArea = document.getElementById('chatArea');
+        const newChatButton = document.getElementById('newChatButton');
+        const sessionList = document.getElementById('sessionList');
+        
+        // Add click handlers to existing session items
+        addSessionClickHandlers();
         
         // Handle form submission
         chatForm.addEventListener('submit', function(e) {
@@ -207,12 +248,10 @@ if (isset($_SESSION['chat_history'])) {
             sendMessage();
         });
         
-        // Handle clear chat button
-        if (clearButton) {
-            clearButton.addEventListener('click', function() {
-                clearChat();
-            });
-        }
+        // Handle new chat button
+        newChatButton.addEventListener('click', function() {
+            createNewSession();
+        });
         
         /**
          * Send a message to the AI via AJAX
@@ -241,8 +280,8 @@ if (isset($_SESSION['chat_history'])) {
                     addMessagesToChat(data.data);
                     // Clear input
                     messageInput.value = '';
-                    // Show clear button if not already visible
-                    showClearButton();
+                    // Reload sessions to update titles
+                    reloadSessions();
                 } else {
                     showError(data.error || 'An error occurred');
                 }
@@ -257,17 +296,13 @@ if (isset($_SESSION['chat_history'])) {
         }
         
         /**
-         * Clear the chat history via AJAX
+         * Create a new chat session
          */
-        function clearChat() {
-            if (!confirm('Are you sure you want to clear the chat?')) {
-                return;
-            }
-            
+        function createNewSession() {
             setLoadingState(true);
             
             const formData = new FormData();
-            formData.append('action', 'clear_chat');
+            formData.append('action', 'create_new_session');
             
             fetch('chat_ajax.php', {
                 method: 'POST',
@@ -278,10 +313,10 @@ if (isset($_SESSION['chat_history'])) {
                 if (data.success) {
                     // Clear chat area
                     chatArea.innerHTML = '<p>Start a conversation by entering a message below.</p>';
-                    // Hide clear button
-                    hideClearButton();
+                    // Reload sessions
+                    reloadSessions();
                 } else {
-                    showError(data.error || 'Failed to clear chat');
+                    showError(data.error || 'Failed to create new session');
                 }
             })
             .catch(error => {
@@ -292,6 +327,200 @@ if (isset($_SESSION['chat_history'])) {
                 setLoadingState(false);
             });
         }
+        
+        /**
+         * Add click handlers to existing session items
+         */
+        function addSessionClickHandlers() {
+            const sessionItems = document.querySelectorAll('.session-item');
+            sessionItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    if (!e.target.classList.contains('session-delete')) {
+                        const sessionId = this.dataset.sessionId;
+                        loadSession(sessionId);
+                    }
+                });
+            });
+        }
+        
+        /**
+         * Reload sessions from server (for dynamic updates)
+         */
+        function reloadSessions() {
+            const formData = new FormData();
+            formData.append('action', 'get_sessions');
+            
+            fetch('chat_ajax.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update the session list HTML
+                    sessionList.innerHTML = '';
+                    Object.values(data.data).forEach(session => {
+                        const date = new Date(session.updated_at);
+                        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        
+                        const sessionElement = document.createElement('div');
+                        sessionElement.className = 'session-item';
+                        sessionElement.dataset.sessionId = session.id;
+                        sessionElement.innerHTML = `
+                            <div class="session-title">${session.title}</div>
+                            <div class="session-date">${formattedDate}</div>
+                            <button class="session-delete" onclick="deleteSession('${session.id}', event)">×</button>
+                        `;
+                        
+                        sessionElement.addEventListener('click', function(e) {
+                            if (!e.target.classList.contains('session-delete')) {
+                                loadSession(session.id);
+                            }
+                        });
+                        
+                        sessionList.appendChild(sessionElement);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error reloading sessions:', error);
+            });
+        }
+        
+        /**
+         * Load a specific session
+         */
+        function loadSession(sessionId) {
+            console.log('Loading session:', sessionId);
+            setLoadingState(true);
+            
+            const formData = new FormData();
+            formData.append('action', 'load_session');
+            formData.append('session_id', sessionId);
+            
+            fetch('chat_ajax.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Session load response:', data);
+                
+                if (data.success) {
+                    // Clear current chat and load session messages
+                    chatArea.innerHTML = '';
+                    
+                    // Check if we have messages (note: messages are in data.data.messages)
+                    const messages = data.data ? data.data.messages : data.messages;
+                    if (messages && Array.isArray(messages) && messages.length > 0) {
+                        console.log('Loading', messages.length, 'messages');
+                        
+                        // Create messages container
+                        const messagesContainer = document.createElement('div');
+                        messagesContainer.className = 'messages-container';
+                        
+                        // Add all messages at once
+                        messages.forEach((message, index) => {
+                            if (message && message.role && message.formatted_content) {
+                                const messageDiv = document.createElement('div');
+                                messageDiv.className = 'message';
+                                messageDiv.setAttribute('role', message.role);
+                                messageDiv.innerHTML = message.formatted_content;
+                                messagesContainer.appendChild(messageDiv);
+                            }
+                        });
+                        
+                        // Add the container to chat area
+                        chatArea.appendChild(messagesContainer);
+                        console.log('Messages loaded successfully');
+                    } else {
+                        console.log('No messages found, showing welcome message');
+                        chatArea.innerHTML = '<p>Start a conversation by entering a message below.</p>';
+                    }
+                    
+                    // Update active session in sidebar
+                    updateActiveSession(sessionId);
+                    
+                    // Re-apply syntax highlighting
+                    if (typeof Prism !== 'undefined') {
+                        Prism.highlightAll();
+                    }
+                    
+                    // Scroll to bottom
+                    setTimeout(() => {
+                        chatArea.scrollTop = chatArea.scrollHeight;
+                    }, 100);
+                } else {
+                    console.error('Session load failed:', data.error);
+                    showError(data.error || 'Failed to load session');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading session:', error);
+                showError('Network error occurred: ' + error.message);
+            })
+            .finally(() => {
+                setLoadingState(false);
+            });
+        }
+        
+        /**
+         * Delete a session (global function for onclick)
+         */
+        window.deleteSession = function(sessionId, event) {
+            event.stopPropagation();
+            
+            if (!confirm('Are you sure you want to delete this chat session?')) {
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('action', 'delete_session');
+            formData.append('session_id', sessionId);
+            
+            fetch('chat_ajax.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    reloadSessions();
+                } else {
+                    showError(data.error || 'Failed to delete session');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Network error occurred');
+            });
+        };
+        
+        /**
+         * Update active session in sidebar
+         */
+        function updateActiveSession(sessionId) {
+            // Remove active class from all sessions
+            document.querySelectorAll('.session-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Add active class to current session
+            const currentSession = document.querySelector(`[data-session-id="${sessionId}"]`);
+            if (currentSession) {
+                currentSession.classList.add('active');
+            } else {
+                // If session element doesn't exist yet, reload sessions
+                console.log('Session element not found, reloading sessions...');
+                reloadSessions();
+            }
+        }
+        
         
         /**
          * Add new messages to the chat area
@@ -336,7 +565,7 @@ if (isset($_SESSION['chat_history'])) {
         function setLoadingState(loading) {
             sendButton.disabled = loading;
             messageInput.disabled = loading;
-            if (clearButton) clearButton.disabled = loading;
+            newChatButton.disabled = loading;
             
             if (loading) {
                 loadingIndicator.style.display = 'block';
@@ -369,28 +598,6 @@ if (isset($_SESSION['chat_history'])) {
             }, 5000);
         }
         
-        /**
-         * Show clear button
-         */
-        function showClearButton() {
-            if (!clearButton) {
-                const newClearButton = document.createElement('button');
-                newClearButton.type = 'button';
-                newClearButton.id = 'clearButton';
-                newClearButton.textContent = 'Clear Chat';
-                newClearButton.addEventListener('click', clearChat);
-                chatForm.appendChild(newClearButton);
-            }
-        }
-        
-        /**
-         * Hide clear button
-         */
-        function hideClearButton() {
-            if (clearButton) {
-                clearButton.remove();
-            }
-        }
         
         /**
          * Scroll to the last user message
