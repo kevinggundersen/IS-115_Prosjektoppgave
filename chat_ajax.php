@@ -227,6 +227,7 @@ function handleSendMealPreferences($client, $parsedown, $instructionType) {
     $equipment = $_POST['equipment'] ?? 'Ikke spesifisert';
     $cookTime = $_POST['cookTime'] ?? 'Ikke spesifisert';
     $mealsPerDay = $_POST['mealsPerDay'] ?? 'Ikke spesifisert';
+    $protionsNumber = $_POST['protionsNumber'] ?? 'Ikke spesifisert';
     
     // Handle custom diet type
     if ($dietType === 'annet' && !empty($dietTypeOther)) {

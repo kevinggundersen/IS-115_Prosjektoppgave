@@ -248,6 +248,10 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                     <!-- Meals per day -->
                     <label for="mealsPerDay">Antall måltider per dag:</label>
                     <input type="number" id="mealsPerDay" name="mealsPerDay" min="1" max="6" placeholder="F.eks. 3"><br>
+
+                    <!-- amount people -->
+                    <label for="protionsNumber">Antal posjoner:</label>
+                    <input type="number" id="protionsNumber" name="protionsNumber" min="1" max="10" placeholder="F.eks. 3"><br>
                     
                     <!-- Submit button -->
                     <button type="submit" id="sendPreferencesButton">Send inn preferanser</button>
