@@ -149,7 +149,7 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
 <body>
     <!-- Main container for the entire application -->
     <div class="container">
-        <h1>IS-115 - Prosjektoppgave</h1>
+        <h1>Kunnskapsgryta</h1>
         
         <!-- Sidebar toggle button for mobile/tablet -->
         <button id="sidebarToggle" class="sidebar-toggle">☰ Samtaler</button>
