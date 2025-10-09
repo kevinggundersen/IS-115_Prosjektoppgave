@@ -511,8 +511,40 @@ input[type="text"] {
     padding: 20px;
     background-color: #f8f9fa;
     margin-bottom: 20px;
-    max-height: 70vh;
+    height: 100%; /* Always use full height of parent container */
+    max-height: none;
+    display: flex;
+    flex-direction: column;
     overflow-y: auto;
+}
+
+/* Ensure the form content area is scrollable */
+#mealPreferencesForm > *:not(button) {
+    flex-shrink: 0;
+}
+
+#mealPreferencesForm button[type="submit"] {
+    margin-top: auto;
+    flex-shrink: 0;
+}
+
+/* Ensure chat container allows form to expand when form is full height */
+.chat-container:has(#mealPreferencesForm) {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Alternative selector for browsers that don't support :has() */
+.chat-container #mealPreferencesForm {
+    flex: 1;
+}
+
+/* When chat area is hidden, make chat container expand to full height */
+.chat-container.form-only {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 #mealPreferencesForm h3 {
@@ -573,4 +605,63 @@ input[type="text"] {
 
 #mealPreferencesForm button[type="submit"]:hover {
     background-color: #858585;
+}
+
+/* Collapsible message styling */
+.collapsible-message {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    margin: 15px 0;
+}
+
+.collapsible-header {
+    padding: 12px 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    background-color: #e9ecef;
+    border-radius: 8px 8px 0 0;
+    transition: background-color 0.2s ease;
+    user-select: none;
+}
+
+.collapsible-header:hover {
+    background-color: #dee2e6;
+}
+
+.collapsible-icon {
+    margin-right: 8px;
+    font-size: 12px;
+    transition: transform 0.2s ease;
+    color: #6c757d;
+}
+
+.collapsible-title {
+    font-weight: 500;
+    color: #495057;
+    font-size: 14px;
+}
+
+.collapsible-content {
+    padding: 15px;
+    background-color: #ffffff;
+    border-radius: 0 0 8px 8px;
+    border-top: 1px solid #e0e0e0;
+    line-height: 1.5;
+}
+
+/* Responsive adjustments for collapsible messages */
+@media (max-width: 768px) {
+    .collapsible-header {
+        padding: 10px 12px;
+    }
+    
+    .collapsible-content {
+        padding: 12px;
+    }
+    
+    .collapsible-title {
+        font-size: 13px;
+    }
 }

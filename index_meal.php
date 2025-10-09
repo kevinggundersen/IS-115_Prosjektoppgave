@@ -173,7 +173,25 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                     <?php if (!empty($chatHistory)): ?>
                         <div class="messages-container">
                             <!-- Loop through each message in the chat history -->
-                            <?php foreach ($chatHistory as $index => $message): ?>
+                            <?php 
+                            $firstUserMessageSkipped = false;
+                            foreach ($chatHistory as $index => $message): 
+                                // Make the first user message collapsible
+                                if ($message['role'] === 'user' && !$firstUserMessageSkipped) {
+                                    $firstUserMessageSkipped = true;
+                            ?>
+                                <div class="message collapsible-message" role="<?php echo $message['role']; ?>">
+                                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                        <span class="collapsible-icon">▼</span>
+                                        <span class="collapsible-title">Dine matpreferanser</span>
+                                    </div>
+                                    <div class="collapsible-content" style="display: none;">
+                                        <?php echo nl2br(htmlspecialchars($message['content'])); ?>
+                                    </div>
+                                </div>
+                            <?php 
+                                } else {
+                            ?>
                                  <div class="message" role="<?php echo $message['role']; ?>">
                                     <?php 
                                     if ($message['role'] === 'model') {
@@ -187,7 +205,9 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                                     }
                                     ?>
                                 </div>
-                            <?php endforeach; ?>
+                            <?php 
+                                }
+                            endforeach; ?>
                         </div>
                     <?php else: ?>
                         <!-- Show welcome message when no conversation history exists -->
@@ -307,6 +327,7 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
         const sidebar = document.getElementById('sidebar');
         const mealPreferencesForm = document.getElementById('mealPreferencesForm');
         const sendPreferencesButton = document.getElementById('sendPreferencesButton');
+        const chatContainer = document.querySelector('.chat-container');
         
         // Add click handlers to existing session items
         addSessionClickHandlers();
@@ -441,9 +462,14 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                     addMessagesToChat(data.data);
                     // Hide the meal preferences form and show chat form after successful submission
                     mealPreferencesForm.style.display = 'none';
+                    if (chatContainer) {
+                        chatContainer.classList.remove('form-only');
+                    }
                     if (chatForm) {
                         chatForm.style.display = 'block';
                     }
+                    // Show chat area after meal preferences are submitted
+                    chatArea.style.display = 'block';
                     // Reload sessions to update titles
                     reloadSessions();
                 } else {
@@ -481,9 +507,14 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                     if (mealPreferencesForm) {
                         mealPreferencesForm.style.display = 'block';
                     }
+                    if (chatContainer) {
+                        chatContainer.classList.add('form-only');
+                    }
                     if (chatForm) {
                         chatForm.style.display = 'none';
                     }
+                    // Hide chat area when showing meal preferences form
+                    chatArea.style.display = 'none';
                     // Reload sessions
                     reloadSessions();
                 } else {
@@ -595,9 +626,30 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                         const messagesContainer = document.createElement('div');
                         messagesContainer.className = 'messages-container';
                         
-                        // Add all messages at once
+                        // Add all messages at once (make first user message collapsible)
+                        let firstUserMessageSkipped = false;
                         messages.forEach((message, index) => {
                             if (message && message.role && message.formatted_content) {
+                                // Make the first user message collapsible
+                                if (message.role === 'user' && !firstUserMessageSkipped) {
+                                    firstUserMessageSkipped = true;
+                                    
+                                    const messageDiv = document.createElement('div');
+                                    messageDiv.className = 'message collapsible-message';
+                                    messageDiv.setAttribute('role', message.role);
+                                    messageDiv.innerHTML = `
+                                        <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                            <span class="collapsible-icon">▼</span>
+                                            <span class="collapsible-title">Dine matpreferanser</span>
+                                        </div>
+                                        <div class="collapsible-content" style="display: none;">
+                                            ${message.formatted_content}
+                                        </div>
+                                    `;
+                                    messagesContainer.appendChild(messageDiv);
+                                    return;
+                                }
+                                
                                 const messageDiv = document.createElement('div');
                                 messageDiv.className = 'message';
                                 messageDiv.setAttribute('role', message.role);
@@ -823,16 +875,26 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
             // If there's a messages container with actual messages, hide the meal form and show chat form
             if (messagesContainer && messagesContainer.children.length > 0) {
                 mealPreferencesForm.style.display = 'none';
+                if (chatContainer) {
+                    chatContainer.classList.remove('form-only');
+                }
                 if (chatForm) {
                     chatForm.style.display = 'block';
                 }
+                // Show chat area when there are messages
+                chatArea.style.display = 'block';
             }
             // If there's only a welcome message, show the meal form and hide chat form
             else if (welcomeMessage && welcomeMessage.textContent.includes('Start en samtale')) {
                 mealPreferencesForm.style.display = 'block';
+                if (chatContainer) {
+                    chatContainer.classList.add('form-only');
+                }
                 if (chatForm) {
                     chatForm.style.display = 'none';
                 }
+                // Hide chat area when showing meal preferences form
+                chatArea.style.display = 'none';
             }
         }
         
@@ -851,6 +913,22 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                 }
             }
         }
+        
+        /**
+         * Toggle collapsible message content
+         */
+        window.toggleCollapsible = function(header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.collapsible-icon');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.textContent = '▲';
+            } else {
+                content.style.display = 'none';
+                icon.textContent = '▼';
+            }
+        };
         
     });
 </script>
