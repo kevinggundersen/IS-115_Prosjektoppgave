@@ -152,14 +152,14 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
         <h1>IS-115 - Prosjektoppgave</h1>
         
         <!-- Sidebar toggle button for mobile/tablet -->
-        <button id="sidebarToggle" class="sidebar-toggle">☰ Sessions</button>
+        <button id="sidebarToggle" class="sidebar-toggle">☰ Samtaler</button>
         
         <!-- Main layout with sidebar and chat area -->
         <div class="main-layout">
             <!-- Sidebar for session history -->
             <div class="sidebar" id="sidebar">
                 <div class="sidebar-header">
-                    <button id="newChatButton" class="new-chat-btn">+ Ny Chat</button>
+                    <button id="newChatButton" class="new-chat-btn">+ Ny Samtale</button>
                 </div>
                 <div class="session-list" id="sessionList">
                     <?php echo renderSessionList($allSessions, $currentSessionId); ?>
@@ -191,7 +191,7 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                         </div>
                     <?php else: ?>
                         <!-- Show welcome message when no conversation history exists -->
-                        <p>Start a conversation by entering a message below.</p>
+                        <p>Start en samtale ved å skrive en melding nedenfor.</p>
                     <?php endif; ?>
                 </div>
                 
@@ -205,7 +205,7 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                 
                 <!-- Loading indicator -->
                 <div id="loadingIndicator" style="display: none; margin: 10px 0; color: #666;">
-                    <em>AI is thinking...</em>
+                    <em>AI tenker...</em>
                 </div>
             </div>
         </div>
