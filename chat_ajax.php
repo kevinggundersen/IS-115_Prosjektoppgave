@@ -250,15 +250,15 @@ function handleSendMealPreferences($client, $parsedown, $instructionType) {
     $currentDate = date('Y.m.d');
     $userInput = 
         "
-        Current date: {$currentDate}. 
-        Diet type: {$dietType}, 
-        Allergies: {$allergiesString}, 
-        Likes: {$likes}, 
-        Dislikes: {$dislikes}, 
-        Budget: {$budget}, 
-        Equipment: {$equipment}, 
-        CookTime: {$cookTime}, 
-        MealsPerDay: {$mealsPerDay}
+        Dato: {$currentDate}. 
+        Diettype: {$dietType}, 
+        Allergier: {$allergiesString}, 
+        Liker: {$likes}, 
+        Liker ikke: {$dislikes}, 
+        Budsjett: {$budget}, 
+        Ustyr: {$equipment}, 
+        Tid til matlaging: {$cookTime}, 
+        Antall måltider per dag: {$mealsPerDay}
         ";
     
     // Initialize chat history if it doesn't exist
