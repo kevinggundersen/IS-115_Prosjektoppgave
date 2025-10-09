@@ -134,7 +134,7 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
 <html lang="no">
 
 <head>
-    <title>IS-115 - Prosjektoppgave</title>
+    <title>Kunnskapsgryta</title>
     
     <!-- External CSS - Link to our custom stylesheet -->
     <link rel="stylesheet" href="assest/css/style.css">
@@ -270,8 +270,8 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                     <input type="number" id="mealsPerDay" name="mealsPerDay" min="1" max="6" placeholder="F.eks. 3"><br>
 
                     <!-- amount people -->
-                    <label for="protionsNumber">Antal posjoner:</label>
-                    <input type="number" id="protionsNumber" name="protionsNumber" min="1" max="10" placeholder="F.eks. 3"><br>
+                    <label for="peopleAmount">Hvor mange lager du for?</label>
+                    <input type="number" id="peopleAmount" name="peopleAmount" min="1" max="10" placeholder="F.eks. 3"><br>
                     
                     <!-- Submit button -->
                     <button type="submit" id="sendPreferencesButton">Send inn preferanser</button>
@@ -754,7 +754,7 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
         function addMessagesToChat(messages) {
             // Remove welcome message if it exists
             const welcomeMessage = chatArea.querySelector('p');
-            if (welcomeMessage && welcomeMessage.textContent.includes('Start a conversation')) {
+            if (welcomeMessage && (welcomeMessage.textContent.includes('Start planleggingen ved å skrive inn dine preferanser nedenfor.') || welcomeMessage.textContent.includes('Start en samtale'))) {
                 welcomeMessage.remove();
             }
             
@@ -775,13 +775,46 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                 messagesContainer.appendChild(messageDiv);
             });
             
+            // Apply collapsible functionality to first user message if needed
+            applyCollapsibleToFirstUserMessage();
+            
             // Scroll to the last user message
             scrollToLastUserMessage();
-            
             
             // Re-apply syntax highlighting
             if (typeof Prism !== 'undefined') {
                 Prism.highlightAll();
+            }
+            
+            // Update form visibility after adding messages
+                checkFormVisibility();
+        }
+        
+        /**
+         * Apply collapsible functionality to the first user message (meal preferences)
+         */
+        function applyCollapsibleToFirstUserMessage() {
+            const messagesContainer = chatArea.querySelector('.messages-container');
+            if (!messagesContainer) return;
+            
+            const userMessages = messagesContainer.querySelectorAll('.message[role="user"]');
+            const firstUserMessage = userMessages[0];
+            
+            // Check if the first user message exists and is not already collapsible
+            if (firstUserMessage && !firstUserMessage.classList.contains('collapsible-message')) {
+                const content = firstUserMessage.innerHTML;
+                
+                // Replace the first user message with collapsible version
+                firstUserMessage.className = 'message collapsible-message';
+                firstUserMessage.innerHTML = `
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <span class="collapsible-icon">▼</span>
+                        <span class="collapsible-title">Dine matpreferanser</span>
+                    </div>
+                    <div class="collapsible-content" style="display: none;">
+                        ${content}
+                    </div>
+                `;
             }
         }
         
@@ -868,12 +901,15 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
         function checkFormVisibility() {
             if (!mealPreferencesForm) return;
             
-            // Check if there are any messages in the chat area (excluding welcome message)
+            // Check if there are any messages in the chat area
             const messagesContainer = chatArea.querySelector('.messages-container');
             const welcomeMessage = chatArea.querySelector('p');
             
-            // If there's a messages container with actual messages, hide the meal form and show chat form
-            if (messagesContainer && messagesContainer.children.length > 0) {
+            // Check if we have actual conversation messages (not just welcome message)
+            const hasConversationMessages = messagesContainer && messagesContainer.children.length > 0;
+            const hasWelcomeMessage = welcomeMessage && welcomeMessage.textContent.includes('Start planleggingen ved å skrive inn dine preferanser nedenfor.');
+            // If there are conversation messages, hide the meal form and show chat form
+            if (hasConversationMessages) {
                 mealPreferencesForm.style.display = 'none';
                 if (chatContainer) {
                     chatContainer.classList.remove('form-only');
@@ -884,8 +920,8 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                 // Show chat area when there are messages
                 chatArea.style.display = 'block';
             }
-            // If there's only a welcome message, show the meal form and hide chat form
-            else if (welcomeMessage && welcomeMessage.textContent.includes('Start en samtale')) {
+            // If there's only a welcome message or no messages, show the meal form and hide chat form
+            else if (hasWelcomeMessage || (!hasConversationMessages && !hasWelcomeMessage)) {
                 mealPreferencesForm.style.display = 'block';
                 if (chatContainer) {
                     chatContainer.classList.add('form-only');

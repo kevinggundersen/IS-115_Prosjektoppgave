@@ -227,7 +227,7 @@ function handleSendMealPreferences($client, $parsedown, $instructionType) {
     $equipment = $_POST['equipment'] ?? 'Ikke spesifisert';
     $cookTime = $_POST['cookTime'] ?? 'Ikke spesifisert';
     $mealsPerDay = $_POST['mealsPerDay'] ?? 'Ikke spesifisert';
-    $protionsNumber = $_POST['protionsNumber'] ?? 'Ikke spesifisert';
+    $peopleAmount = $_POST['peopleAmount'] ?? 'Ikke spesifisert';
     
     // Handle custom diet type
     if ($dietType === 'annet' && !empty($dietTypeOther)) {
@@ -259,7 +259,8 @@ function handleSendMealPreferences($client, $parsedown, $instructionType) {
         Budsjett: {$budget}, 
         Ustyr: {$equipment}, 
         Tid til matlaging: {$cookTime}, 
-        Antall måltider per dag: {$mealsPerDay}
+        Antall måltider per dag: {$mealsPerDay},
+        Antall personer: {$peopleAmount},
         ";
     
     // Initialize chat history if it doesn't exist
