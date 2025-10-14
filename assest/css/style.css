@@ -14,6 +14,15 @@
  * - Scrollable chat area with proper overflow handling
  */
 
+/* ==========================================================================
+   RESET & BASE STYLES
+   ========================================================================== */
+
+/* Ensure all elements use border-box sizing */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
 /* Global body styling - sets basic page layout and spacing */
 body {
     margin: 0;     /* Remove margin to prevent scroll */
@@ -23,10 +32,9 @@ body {
     overflow: hidden; /* Prevent any page-level scrolling */
 }
 
-/* Ensure all elements use border-box sizing */
-*, *::before, *::after {
-    box-sizing: border-box;
-}
+/* ==========================================================================
+   LAYOUT CONTAINERS
+   ========================================================================== */
 
 /* Main container - centers content and sets maximum width for readability */
 .container {
@@ -36,6 +44,28 @@ body {
     height: 100%;       /* Use full height of body (which accounts for padding) */
     display: flex;      /* Use flexbox for proper height control */
     flex-direction: column; /* Stack elements vertically */
+}
+
+/* Main layout container for sidebar and chat area */
+.main-layout {
+    display: flex;
+    gap: 20px;
+    flex: 1; /* Take remaining space after header and toggle button */
+    min-height: 0; /* Allow flex children to shrink */
+}
+
+/* ==========================================================================
+   SIDEBAR COMPONENTS
+   ========================================================================== */
+
+/* Sidebar styling */
+.sidebar {
+    width: 300px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    flex-shrink: 0;
 }
 
 /* Sidebar toggle button - hidden on desktop, visible on mobile/tablet */
@@ -55,97 +85,6 @@ body {
 
 .sidebar-toggle:hover {
     background-color: #858585;
-}
-
-/* Main layout container for sidebar and chat area */
-.main-layout {
-    display: flex;
-    gap: 20px;
-    flex: 1; /* Take remaining space after header and toggle button */
-    min-height: 0; /* Allow flex children to shrink */
-}
-
-/* Tablet layout - implement toggleable sidebar */
-@media (max-width: 1024px) {
-    .sidebar-toggle {
-        display: block; /* Show toggle button on tablets */
-    }
-    
-    .main-layout {
-        flex-direction: column;
-        gap: 15px;
-        /* Remove fixed height, let flex handle it */
-    }
-    
-    .sidebar {
-        width: 100%;
-        order: 1; /* Move sidebar above chat when shown */
-        display: none; /* Hidden by default */
-        max-height: 40vh; /* Limit sidebar height */
-        overflow-y: auto; /* Allow scrolling within sidebar */
-    }
-    
-    .sidebar.show {
-        display: block; /* Show when toggled */
-    }
-    
-    .chat-container {
-        order: 2; /* Chat area below sidebar when sidebar is shown */
-        min-width: unset;
-        flex: 1; /* Take remaining space */
-    }
-    
-    .chat-area {
-        flex: 1; /* Take remaining space */
-        min-height: 0; /* Allow shrinking */
-    }
-}
-
-/* Sidebar styling */
-.sidebar {
-    width: 300px;
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 15px;
-    flex-shrink: 0;
-}
-
-/* Mobile layout - implement toggleable sidebar */
-@media (max-width: 768px) {
-    body {
-        padding: 10px; /* Reduce body padding on mobile */
-    }
-    
-    .sidebar-toggle {
-        display: block; /* Show toggle button on mobile */
-        width: 100%; /* Full width on mobile */
-        margin-bottom: 10px;
-    }
-    
-    .main-layout {
-        gap: 10px; /* Reduce gap on mobile */
-        /* Remove fixed height, let flex handle it */
-    }
-    
-    .sidebar {
-        width: 100%;
-        padding: 10px; /* Reduce sidebar padding on mobile */
-        display: none; /* Hidden by default */
-        max-height: 35vh; /* Limit sidebar height on mobile */
-        overflow-y: auto; /* Allow scrolling within sidebar */
-        order: 1; /* Ensure sidebar appears above chat on mobile */
-    }
-    
-    .sidebar.show {
-        display: block; /* Show when toggled */
-    }
-    
-    .chat-area {
-        flex: 1; /* Take remaining space */
-        min-height: 0; /* Allow shrinking */
-        padding: 10px; /* Reduce chat area padding on mobile */
-    }
 }
 
 .sidebar-header {
@@ -209,17 +148,24 @@ body {
 
 .session-delete {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    background: rgb(255, 255, 255);
-    border-radius: 20%;
-    border: none;
-    color: #dc3545;
+    top: 6px;
+    right: 6px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 50%;
+    color: #6c757d;
     cursor: pointer;
-    font-size: 24px;
-    padding: 2px;
+    font-size: 16px;
+    font-weight: bold;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
     opacity: 0;
-    transition: opacity 0.2s;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .session-item:hover .session-delete {
@@ -227,8 +173,16 @@ body {
 }
 
 .session-delete:hover {
-    color: #a71e2a;
+    background: #dc3545;
+    color: white;
+    border-color: #dc3545;
+    transform: scale(1.1);
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);
 }
+
+/* ==========================================================================
+   CHAT AREA COMPONENTS
+   ========================================================================== */
 
 /* Chat container */
 .chat-container {
@@ -237,67 +191,6 @@ body {
     flex-direction: column;
     min-width: 400px;
     min-height: 0; /* Allow shrinking */
-}
-
-/* Chat container responsive adjustments */
-@media (max-width: 768px) {
-    .chat-container {
-        min-width: 100%;
-    }
-    
-    /* Improve form layout on mobile */
-    #chatForm {
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    input[type="text"] {
-        width: 100%;
-        margin-right: 0;
-        margin-bottom: 0;
-    }
-    
-    #sendButton {
-        width: 20%;
-    }
-}
-
-/* Extra small screens (phones in portrait) */
-@media (max-width: 480px) {
-    body {
-        padding: 5px; /* Further reduce padding on very small screens */
-    }
-    
-    .sidebar-toggle {
-        padding: 8px 12px; /* Smaller padding on very small screens */
-        font-size: 12px;
-    }
-    
-    .main-layout {
-        gap: 5px; /* Minimal gap on very small screens */
-        /* Remove fixed height, let flex handle it */
-    }
-    
-    .sidebar {
-        max-height: 30vh; /* Smaller sidebar on very small screens */
-        padding: 8px; /* Reduce padding further on very small screens */
-        order: 1; /* Ensure sidebar appears above chat on very small screens */
-    }
-    
-    .chat-area {
-        flex: 1; /* Take remaining space */
-        min-height: 0; /* Allow shrinking */
-        padding: 8px; /* Reduce padding further on very small screens */
-    }
-    
-    .message[role="user"] {
-        margin-left: 5%; /* Minimal margin on very small screens */
-    }
-    
-    .message {
-        margin: 10px 0; /* Reduce message spacing on small screens */
-        padding: 8px; /* Reduce message padding on small screens */
-    }
 }
 
 /* Chat area - the main conversation display area */
@@ -329,25 +222,13 @@ body {
     margin-left: 20%;      /* Responsive indent from left to distinguish from AI messages */
 }
 
-/* Adjust user message margin for different screen sizes */
-@media (max-width: 1024px) {
-    .message[role="user"] {
-        margin-left: 15%; /* Reduce margin on tablets */
-    }
-}
-
-@media (max-width: 768px) {
-    .message[role="user"] {
-        margin-left: 10%; /* Further reduce margin on mobile */
-    }
-}
-
 /* AI/Model message styling - messages from the AI assistant */
 .message[role="model"] {
     text-align: left;      /* Left-align text content */
     /* No special background - uses default white/transparent */
 }
 
+/* Chat form styling */
 #chatForm {
     display: flex;
     flex-direction: row;
@@ -374,6 +255,7 @@ input[type="text"] {
     padding: 15px;
     flex-shrink: 0;
 }
+
 #sendButton:hover {
     background-color: #e4e4e4;
     border: 1px solid #4d4d4d;
@@ -382,9 +264,11 @@ input[type="text"] {
     flex-shrink: 0;
 }
 
+/* ==========================================================================
+   MARKDOWN CONTENT STYLING
+   ========================================================================== */
+
 /**
- * Markdown Content Styling
- * 
  * These styles handle the formatting of markdown content that comes from
  * the AI responses. The Parsedown library converts markdown to HTML,
  * and these styles make that HTML look good in our chat interface.
@@ -505,13 +389,17 @@ input[type="text"] {
     color: #004499;  /* Darker blue on hover */
 }
 
+/* ==========================================================================
+   MEAL PLANNER FORM COMPONENTS
+   ========================================================================== */
+
 #mealPreferencesForm {
     border: 1px solid #e9ecef;
     border-radius: 8px;
     padding: 20px;
     background-color: #f8f9fa;
     margin-bottom: 20px;
-    height: 100%; /* Always use full height of parent container */
+    height: 100%;
     max-height: none;
     display: flex;
     flex-direction: column;
@@ -607,6 +495,10 @@ input[type="text"] {
     background-color: #858585;
 }
 
+/* ==========================================================================
+   COLLAPSIBLE MESSAGE COMPONENTS
+   ========================================================================== */
+
 /* Collapsible message styling */
 .collapsible-message {
     border: 1px solid #e0e0e0;
@@ -651,8 +543,113 @@ input[type="text"] {
     line-height: 1.5;
 }
 
-/* Responsive adjustments for collapsible messages */
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+
+/* Tablet layout - implement toggleable sidebar */
+@media (max-width: 1024px) {
+    .sidebar-toggle {
+        display: block; /* Show toggle button on tablets */
+    }
+    
+    .main-layout {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .sidebar {
+        width: 100%;
+        order: 1; /* Move sidebar above chat when shown */
+        display: none; /* Hidden by default */
+        max-height: 40vh; /* Limit sidebar height */
+        overflow-y: auto; /* Allow scrolling within sidebar */
+    }
+    
+    .sidebar.show {
+        display: block; /* Show when toggled */
+    }
+    
+    .chat-container {
+        order: 2; /* Chat area below sidebar when sidebar is shown */
+        min-width: unset;
+        flex: 1; /* Take remaining space */
+    }
+    
+    .chat-area {
+        flex: 1; /* Take remaining space */
+        min-height: 0; /* Allow shrinking */
+    }
+    
+    /* Adjust user message margin for tablets */
+    .message[role="user"] {
+        margin-left: 15%; /* Reduce margin on tablets */
+    }
+}
+
+/* Mobile layout - implement toggleable sidebar */
 @media (max-width: 768px) {
+    body {
+        padding: 10px; /* Reduce body padding on mobile */
+    }
+    
+    .sidebar-toggle {
+        display: block; /* Show toggle button on mobile */
+        width: 100%; /* Full width on mobile */
+        margin-bottom: 10px;
+    }
+    
+    .main-layout {
+        gap: 10px; /* Reduce gap on mobile */
+        /* Remove fixed height, let flex handle it */
+    }
+    
+    .sidebar {
+        width: 100%;
+        padding: 10px; /* Reduce sidebar padding on mobile */
+        display: none; /* Hidden by default */
+        max-height: 35vh; /* Limit sidebar height on mobile */
+        overflow-y: auto; /* Allow scrolling within sidebar */
+        order: 1; /* Ensure sidebar appears above chat on mobile */
+    }
+    
+    .sidebar.show {
+        display: block; /* Show when toggled */
+    }
+    
+    .chat-area {
+        flex: 1; /* Take remaining space */
+        min-height: 0; /* Allow shrinking */
+        padding: 10px; /* Reduce chat area padding on mobile */
+    }
+    
+    /* Chat container responsive adjustments */
+    .chat-container {
+        min-width: 100%;
+    }
+    
+    /* Improve form layout on mobile */
+    #chatForm {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    input[type="text"] {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 0;
+    }
+    
+    #sendButton {
+        width: 20%;
+    }
+    
+    /* Adjust user message margin for mobile */
+    .message[role="user"] {
+        margin-left: 10%; /* Further reduce margin on mobile */
+    }
+    
+    /* Responsive adjustments for collapsible messages */
     .collapsible-header {
         padding: 10px 12px;
     }
@@ -663,5 +660,43 @@ input[type="text"] {
     
     .collapsible-title {
         font-size: 13px;
+    }
+}
+
+/* Extra small screens (phones in portrait) */
+@media (max-width: 480px) {
+    body {
+        padding: 5px; /* Further reduce padding on very small screens */
+    }
+    
+    .sidebar-toggle {
+        padding: 8px 12px; /* Smaller padding on very small screens */
+        font-size: 12px;
+    }
+    
+    .main-layout {
+        gap: 5px; /* Minimal gap on very small screens */
+        /* Remove fixed height, let flex handle it */
+    }
+    
+    .sidebar {
+        max-height: 30vh; /* Smaller sidebar on very small screens */
+        padding: 8px; /* Reduce padding further on very small screens */
+        order: 1; /* Ensure sidebar appears above chat on very small screens */
+    }
+    
+    .chat-area {
+        flex: 1; /* Take remaining space */
+        min-height: 0; /* Allow shrinking */
+        padding: 8px; /* Reduce padding further on very small screens */
+    }
+    
+    .message[role="user"] {
+        margin-left: 5%; /* Minimal margin on very small screens */
+    }
+    
+    .message {
+        margin: 10px 0; /* Reduce message spacing on small screens */
+        padding: 8px; /* Reduce message padding on small screens */
     }
 }
