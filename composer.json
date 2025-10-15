@@ -3,7 +3,7 @@
     "description": "AI Chat Application for IS-115 Course Project using Google Gemini API",
     "type": "project",
     "require": {
-        "google-gemini-php/client": "^2.6",
+        "google-gemini-php/client": "2.0",
         "symfony/http-client": "^7.3",
         "nyholm/psr7": "^1.8",
         "psr/http-client": "^1.0",

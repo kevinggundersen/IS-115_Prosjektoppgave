@@ -305,6 +305,6 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
 </body>
 
 <!-- JavaScript for AJAX functionality and syntax highlighting -->
-<script src="assest/js/index.js"></script>
+<script src="assets/js/index.js"></script>
 
 </html>
