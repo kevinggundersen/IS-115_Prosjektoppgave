@@ -135,9 +135,10 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
 
 <head>
     <title>Kunnskapsgryta</title>
+    <link rel="icon" type="image/png" href="assets/images/Kunnskapsgryta_Uten_bakgrunn_Ingen_Tekst.png">
     
     <!-- External CSS - Link to our custom stylesheet -->
-    <link rel="stylesheet" href="assest/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
     
     <!-- Prism.js for syntax highlighting -->
     <!-- These libraries provide beautiful syntax highlighting for code blocks -->
@@ -149,7 +150,16 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
 <body>
     <!-- Main container for the entire application -->
     <div class="container">
-        <h1>Kunnskapsgryta</h1>
+        <div class="header">
+            <div class="branding" style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+            <div class="branding-image" style="flex-shrink: 0;">
+                <img src="assets/images/Kunnskapsgryta_Uten_bakgrunn.png" alt="Kunnskapsgryta" height="75px" width="75px">
+            </div>
+            <div class="branding-text" style="flex: 1;">
+                <h1 style="margin: 0; color: #333; font-size: 2em;">Kunnskapsgryta</h1>
+            </div>
+        </div>
+        </div>
         
         <!-- Sidebar toggle button for mobile/tablet -->
         <button id="sidebarToggle" class="sidebar-toggle">☰ Samtaler</button>

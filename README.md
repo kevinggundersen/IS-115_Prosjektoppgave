@@ -114,7 +114,7 @@ $instructionType = 'default'; // Options: 'default', 'tutor', 'debugger', 'casua
 
 ```
 IS-115_Prosjektoppgave/
-├── assest/
+├── assets/
 │   └── css/
 │       └── style.css          # Application styles
 ├── config/

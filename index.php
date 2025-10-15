@@ -137,7 +137,7 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
     <title>IS-115 - Prosjektoppgave</title>
     
     <!-- External CSS - Link to our custom stylesheet -->
-    <link rel="stylesheet" href="assest/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
     
     <!-- Prism.js for syntax highlighting -->
     <!-- These libraries provide beautiful syntax highlighting for code blocks -->

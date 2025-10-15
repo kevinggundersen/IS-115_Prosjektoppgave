@@ -23,6 +23,14 @@ body {
     overflow: hidden; /* Prevent any page-level scrolling */
 }
 
+.header {
+    /*background-color: #f5eedd;*/
+    margin-bottom: 20px;
+    margin-top: -20px;
+    margin-left: -20px;
+    margin-right: -20px;
+}
+
 /* Ensure all elements use border-box sizing */
 *, *::before, *::after {
     box-sizing: border-box;
@@ -36,6 +44,36 @@ body {
     height: 100%;       /* Use full height of body (which accounts for padding) */
     display: flex;      /* Use flexbox for proper height control */
     flex-direction: column; /* Stack elements vertically */
+
+}
+
+/* Branding section - aligns image to the left of text */
+.branding {
+    display: flex !important;          /* Use flexbox for horizontal layout */
+    flex-direction: row !important;    /* Ensure horizontal direction */
+    align-items: center !important;    /* Vertically center align items */
+    gap: 15px !important;             /* Space between image and text */
+  /* Space below branding section */
+    width: 100% !important;           /* Ensure full width */
+}
+
+.branding-image {
+    flex-shrink: 0 !important;        /* Prevent image from shrinking */
+    display: inline-block !important; /* Ensure proper display */
+}
+
+.branding-text {
+    flex: 1 !important;               /* Allow text to take remaining space */
+    display: inline-block !important; /* Ensure proper display */
+
+}
+
+.branding-text h1 {
+    margin: 0 !important;             /* Remove default margin from h1 */
+    color: #333 !important;           /* Dark text color */
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    font-size: 1.2rem;
 }
 
 /* Sidebar toggle button - hidden on desktop, visible on mobile/tablet */
