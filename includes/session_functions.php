@@ -63,7 +63,7 @@ function createSessionTitle($messages) {
     }
     
     // If no user messages were found, return a default title
-    return 'New Chat';
+    return 'Ny samtale';
 }
 
 /**
@@ -114,7 +114,7 @@ function renderSessionList($sessions, $currentSessionId = null) {
     // Check if there are any sessions to display
     if (empty($sessions)) {
         // If no sessions exist, return a message telling the user to start chatting
-        return '<p style="color: #666; font-style: italic; text-align: center; margin-top: 20px;">No chat sessions yet</p>';
+        return '<p style="color: #666; font-style: italic; text-align: center; margin-top: 20px;">Ingen samtaler enda</p>';
     }
     
     // Start building the HTML string
