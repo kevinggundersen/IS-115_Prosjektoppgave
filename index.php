@@ -134,7 +134,8 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
 <html lang="no">
 
 <head>
-    <title>IS-115 - Prosjektoppgave</title>
+    <title>Kunnskapsgryta</title>
+    <link rel="icon" type="image/png" href="assets/images/Kunnskapsgryta_Uten_bakgrunn_Ingen_Tekst.png">
     
     <!-- External CSS - Link to our custom stylesheet -->
     <link rel="stylesheet" href="assets/css/style.css">
@@ -149,7 +150,16 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
 <body>
     <!-- Main container for the entire application -->
     <div class="container">
-        <h1>IS-115 - Prosjektoppgave</h1>
+        <div class="header">
+            <div class="branding" style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+            <div class="branding-image" style="flex-shrink: 0;">
+                <img src="assets/images/Kunnskapsgryta_Uten_bakgrunn.png" alt="Kunnskapsgryta" height="75px" width="75px">
+            </div>
+            <div class="branding-text" style="flex: 1;">
+                <h1 style="margin: 0; color: #333; font-size: 2em;">Kunnskapsgryta</h1>
+            </div>
+        </div>
+        </div>
         
         <!-- Sidebar toggle button for mobile/tablet -->
         <button id="sidebarToggle" class="sidebar-toggle">☰ Samtaler</button>
@@ -173,7 +183,25 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                     <?php if (!empty($chatHistory)): ?>
                         <div class="messages-container">
                             <!-- Loop through each message in the chat history -->
-                            <?php foreach ($chatHistory as $index => $message): ?>
+                            <?php 
+                            $firstUserMessageSkipped = false;
+                            foreach ($chatHistory as $index => $message): 
+                                // Make the first user message collapsible
+                                if ($message['role'] === 'user' && !$firstUserMessageSkipped) {
+                                    $firstUserMessageSkipped = true;
+                            ?>
+                                <div class="message collapsible-message" role="<?php echo $message['role']; ?>">
+                                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                        <span class="collapsible-icon">▼</span>
+                                        <span class="collapsible-title">Dine matpreferanser</span>
+                                    </div>
+                                    <div class="collapsible-content" style="display: none;">
+                                        <?php echo nl2br(htmlspecialchars($message['content'])); ?>
+                                    </div>
+                                </div>
+                            <?php 
+                                } else {
+                            ?>
                                  <div class="message" role="<?php echo $message['role']; ?>">
                                     <?php 
                                     if ($message['role'] === 'model') {
@@ -187,7 +215,9 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                                     }
                                     ?>
                                 </div>
-                            <?php endforeach; ?>
+                            <?php 
+                                }
+                            endforeach; ?>
                         </div>
                     <?php else: ?>
                         <!-- Show welcome message when no conversation history exists -->
@@ -196,7 +226,69 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                 </div>
                 
                 <!-- Chat input form -->
-                <form id="chatForm">
+                <form id="mealPreferencesForm" <?php echo (count($chatHistory) > 0) ? 'style="display: none;"' : ''; ?>>
+                    <h3>Fortell oss om dine matpreferanser</h3>
+                    
+                    <!-- Diet type -->
+                    <label for="dietType">Kosthold:</label>
+                    <select id="dietType" name="dietType">
+                        <option value="">Ingen spesielle krav</option>
+                        <option value="vegetarisk">Vegetarisk</option>
+                        <option value="vegansk">Vegansk</option>
+                        <option value="pescetarian">Pescetarianer</option>
+                        <option value="glutenfri">Glutenfri</option>
+                        <option value="laktosefri">Laktosefri</option>
+                        <option value="annet">Annet</option>
+                    </select>
+                    <input type="text" id="dietTypeOther" name="dietTypeOther" placeholder="Spesifiser kosthold..." style="display: none; margin-top: 5px;"><br>
+                    <!-- Allergies -->
+                    <label for="allergies">Allergier (velg alle som gjelder):</label>
+                    <div id="allergies">
+                        <label><input type="checkbox" name="allergies[]" value="nøtter"> Nøtter</label>
+                        <label><input type="checkbox" name="allergies[]" value="egg"> Egg</label>
+                        <label><input type="checkbox" name="allergies[]" value="melk"> Melk</label>
+                        <label><input type="checkbox" name="allergies[]" value="gluten"> Gluten</label>
+                        <label><input type="checkbox" name="allergies[]" value="skalldyr"> Skalldyr</label>
+                        <label><input type="checkbox" name="allergies[]" value="soya"> Soya</label>
+                        <label><input type="checkbox" name="allergies[]" value="fisk"> Fisk</label>
+                        <label><input type="checkbox" name="allergies[]" value="annet" id="allergiesAnnet"> Annet</label>
+                    </div>
+                    <input type="text" id="allergiesOther" name="allergiesOther" placeholder="Spesifiser allergier..." style="display: none; margin-top: 5px;">
+                    
+                    <!-- Likes -->
+                    <label for="likes">Mat du liker (valgfritt):</label>
+                    <input type="text" id="likes" name="likes" placeholder="F.eks. pasta, kylling, tomat ..."><br>
+                    
+                    <!-- Dislikes -->
+                    <label for="dislikes">Mat du ikke liker (valgfritt):</label>
+                    <input type="text" id="dislikes" name="dislikes" placeholder="F.eks. fisk, brokkoli ..."><br>
+                    
+                    <!-- Budget -->
+                    <label for="budget">Ukentlig matbudsjett (kr):</label>
+                    <input type="number" id="budget" name="budget" min="0" step="1" placeholder="F.eks. 400" required><br>
+                    
+                    <!-- Kitchen equipment -->
+                    <label for="equipment">Tilgjengelig kjøkkenutstyr:</label>
+                    <input type="text" id="equipment" name="equipment" placeholder="F.eks. komfyr, mikrobølgeovn, vannkoker ..."><br>
+                    
+                    <!-- Cooking time -->
+                    <label for="cookTime">Hvor mye tid har du til matlaging per dag? (minutter):</label>
+                    <input type="number" id="cookTime" name="cookTime" min="0" step="1" placeholder="F.eks. 30"><br>
+                    
+                    <!-- Meals per day -->
+                    <label for="mealsPerDay">Antall måltider per dag:</label>
+                    <input type="number" id="mealsPerDay" name="mealsPerDay" min="1" max="6" placeholder="F.eks. 3"><br>
+
+                    <!-- amount people -->
+                    <label for="peopleAmount">Hvor mange lager du for?</label>
+                    <input type="number" id="peopleAmount" name="peopleAmount" min="1" max="10" placeholder="F.eks. 3"><br>
+                    
+                    <!-- Submit button -->
+                    <button type="submit" id="sendPreferencesButton">Send inn preferanser</button>
+                </form>
+                
+                <!-- Chat input form -->
+                <form id="chatForm" <?php echo (count($chatHistory) > 0) ? '' : 'style="display: none;"'; ?>>
                     <!-- Text input for user messages -->
                     <input type='text' id="messageInput" name="message" placeholder='Skriv meldingen din her...' required>
                     <!-- Submit button to send the message -->
@@ -205,7 +297,7 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                 
                 <!-- Loading indicator -->
                 <div id="loadingIndicator" style="display: none; margin: 10px 0; color: #666;">
-                    <em>AI tenker...</em>
+                    <em>Forbereder noe godt...</em>
                 </div>
             </div>
         </div>
@@ -213,455 +305,6 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
 </body>
 
 <!-- JavaScript for AJAX functionality and syntax highlighting -->
-<script>
-    /**
-     * AJAX Chat Application
-     * 
-     * This script handles all the AJAX functionality for the chat application,
-     * including sending messages, receiving responses, and updating the UI
-     * without page reloads.
-     */
-    
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize syntax highlighting
-        if (typeof Prism !== 'undefined') {
-            Prism.highlightAll();
-        }
-        
-        // Set initial scroll position to bottom after content is rendered
-        setTimeout(() => {
-            chatArea.scrollTop = chatArea.scrollHeight;
-        }, 0);
-        
-        // Get DOM elements
-        const chatForm = document.getElementById('chatForm');
-        const messageInput = document.getElementById('messageInput');
-        const sendButton = document.getElementById('sendButton');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        const chatArea = document.getElementById('chatArea');
-        const newChatButton = document.getElementById('newChatButton');
-        const sessionList = document.getElementById('sessionList');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebar = document.getElementById('sidebar');
-        
-        // Add click handlers to existing session items
-        addSessionClickHandlers();
-        
-        // Handle form submission
-        chatForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            sendMessage();
-        });
-        
-        // Handle new chat button
-        newChatButton.addEventListener('click', function() {
-            createNewSession();
-        });
-        
-        // Handle sidebar toggle
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', function() {
-                toggleSidebar();
-            });
-        }
-        
-        /**
-         * Send a message to the AI via AJAX
-         */
-        function sendMessage() {
-            const message = messageInput.value.trim();
-            if (!message) return;
-            
-            // Disable form and show loading
-            setLoadingState(true);
-            
-            // Create form data
-            const formData = new FormData();
-            formData.append('action', 'send_message');
-            formData.append('message', message);
-            
-            // Send AJAX request
-            fetch('chat_ajax.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Add new messages to chat area
-                    addMessagesToChat(data.data);
-                    // Clear input
-                    messageInput.value = '';
-                    // Reload sessions to update titles
-                    reloadSessions();
-                } else {
-                    showError(data.error || 'An error occurred');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showError('Network error occurred');
-            })
-            .finally(() => {
-                setLoadingState(false);
-            });
-        }
-        
-        /**
-         * Create a new chat session
-         */
-        function createNewSession() {
-            setLoadingState(true);
-            
-            const formData = new FormData();
-            formData.append('action', 'create_new_session');
-            
-            fetch('chat_ajax.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Clear chat area
-                    chatArea.innerHTML = '<p>Start a conversation by entering a message below.</p>';
-                    // Reload sessions
-                    reloadSessions();
-                } else {
-                    showError(data.error || 'Failed to create new session');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showError('Network error occurred');
-            })
-            .finally(() => {
-                setLoadingState(false);
-            });
-        }
-        
-        /**
-         * Add click handlers to existing session items
-         */
-        function addSessionClickHandlers() {
-            const sessionItems = document.querySelectorAll('.session-item');
-            sessionItems.forEach(item => {
-                item.addEventListener('click', function(e) {
-                    if (!e.target.classList.contains('session-delete')) {
-                        const sessionId = this.dataset.sessionId;
-                        loadSession(sessionId);
-                    }
-                });
-            });
-        }
-        
-        /**
-         * Reload sessions from server (for dynamic updates)
-         */
-        function reloadSessions() {
-            const formData = new FormData();
-            formData.append('action', 'get_sessions');
-            
-            fetch('chat_ajax.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Update the session list HTML
-                    sessionList.innerHTML = '';
-                    Object.values(data.data).forEach(session => {
-                        const date = new Date(session.updated_at);
-                        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        
-                        const sessionElement = document.createElement('div');
-                        sessionElement.className = 'session-item';
-                        sessionElement.dataset.sessionId = session.id;
-                        sessionElement.innerHTML = `
-                            <div class="session-title">${session.title}</div>
-                            <div class="session-date">${formattedDate}</div>
-                            <button class="session-delete" onclick="deleteSession('${session.id}', event)">×</button>
-                        `;
-                        
-                        sessionElement.addEventListener('click', function(e) {
-                            if (!e.target.classList.contains('session-delete')) {
-                                loadSession(session.id);
-                            }
-                        });
-                        
-                        sessionList.appendChild(sessionElement);
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Error reloading sessions:', error);
-            });
-        }
-        
-        /**
-         * Load a specific session
-         */
-        function loadSession(sessionId) {
-            console.log('Loading session:', sessionId);
-            setLoadingState(true);
-            
-            const formData = new FormData();
-            formData.append('action', 'load_session');
-            formData.append('session_id', sessionId);
-            
-            fetch('chat_ajax.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Session load response:', data);
-                
-                if (data.success) {
-                    // Clear current chat and load session messages
-                    chatArea.innerHTML = '';
-                    
-                    // Check if we have messages (note: messages are in data.data.messages)
-                    const messages = data.data ? data.data.messages : data.messages;
-                    if (messages && Array.isArray(messages) && messages.length > 0) {
-                        console.log('Loading', messages.length, 'messages');
-                        
-                        // Create messages container
-                        const messagesContainer = document.createElement('div');
-                        messagesContainer.className = 'messages-container';
-                        
-                        // Add all messages at once
-                        messages.forEach((message, index) => {
-                            if (message && message.role && message.formatted_content) {
-                                const messageDiv = document.createElement('div');
-                                messageDiv.className = 'message';
-                                messageDiv.setAttribute('role', message.role);
-                                messageDiv.innerHTML = message.formatted_content;
-                                messagesContainer.appendChild(messageDiv);
-                            }
-                        });
-                        
-                        // Add the container to chat area
-                        chatArea.appendChild(messagesContainer);
-                        console.log('Messages loaded successfully');
-                    } else {
-                        console.log('No messages found, showing welcome message');
-                        chatArea.innerHTML = '<p>Start a conversation by entering a message below.</p>';
-                    }
-                    
-                    // Update active session in sidebar
-                    updateActiveSession(sessionId);
-                    
-                    // Re-apply syntax highlighting
-                    if (typeof Prism !== 'undefined') {
-                        Prism.highlightAll();
-                    }
-                    
-                    // Scroll to bottom
-                    setTimeout(() => {
-                        chatArea.scrollTop = chatArea.scrollHeight;
-                    }, 100);
-                } else {
-                    console.error('Session load failed:', data.error);
-                    showError(data.error || 'Failed to load session');
-                }
-            })
-            .catch(error => {
-                console.error('Error loading session:', error);
-                showError('Network error occurred: ' + error.message);
-            })
-            .finally(() => {
-                setLoadingState(false);
-            });
-        }
-        
-        /**
-         * Delete a session (global function for onclick)
-         */
-        window.deleteSession = function(sessionId, event) {
-            event.stopPropagation();
-            
-            if (!confirm('Are you sure you want to delete this chat session?')) {
-                return;
-            }
-            
-            const formData = new FormData();
-            formData.append('action', 'delete_session');
-            formData.append('session_id', sessionId);
-            
-            fetch('chat_ajax.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    reloadSessions();
-                } else {
-                    showError(data.error || 'Failed to delete session');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showError('Network error occurred');
-            });
-        };
-        
-        /**
-         * Update active session in sidebar
-         */
-        function updateActiveSession(sessionId) {
-            // Remove active class from all sessions
-            document.querySelectorAll('.session-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Add active class to current session
-            const currentSession = document.querySelector(`[data-session-id="${sessionId}"]`);
-            if (currentSession) {
-                currentSession.classList.add('active');
-            } else {
-                // If session element doesn't exist yet, reload sessions
-                console.log('Session element not found, reloading sessions...');
-                reloadSessions();
-            }
-        }
-        
-        
-        /**
-         * Add new messages to the chat area
-         */
-        function addMessagesToChat(messages) {
-            // Remove welcome message if it exists
-            const welcomeMessage = chatArea.querySelector('p');
-            if (welcomeMessage && welcomeMessage.textContent.includes('Start a conversation')) {
-                welcomeMessage.remove();
-            }
-            
-            // Create messages container if it doesn't exist
-            let messagesContainer = chatArea.querySelector('.messages-container');
-            if (!messagesContainer) {
-                messagesContainer = document.createElement('div');
-                messagesContainer.className = 'messages-container';
-                chatArea.appendChild(messagesContainer);
-            }
-            
-            // Add each new message
-            messages.forEach(message => {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message';
-                messageDiv.setAttribute('role', message.role);
-                messageDiv.innerHTML = message.formatted_content;
-                messagesContainer.appendChild(messageDiv);
-            });
-            
-            // Scroll to the last user message
-            scrollToLastUserMessage();
-            
-            
-            // Re-apply syntax highlighting
-            if (typeof Prism !== 'undefined') {
-                Prism.highlightAll();
-            }
-        }
-        
-        /**
-         * Set loading state for the form
-         */
-        function setLoadingState(loading) {
-            sendButton.disabled = loading;
-            messageInput.disabled = loading;
-            newChatButton.disabled = loading;
-            
-            if (loading) {
-                loadingIndicator.style.display = 'block';
-                sendButton.textContent = 'Sending...';
-            } else {
-                loadingIndicator.style.display = 'none';
-                sendButton.textContent = 'Send';
-            }
-        }
-        
-        /**
-         * Show error message
-         */
-        function showError(message) {
-            // Create or update error message
-            let errorDiv = document.getElementById('errorMessage');
-            if (!errorDiv) {
-                errorDiv = document.createElement('div');
-                errorDiv.id = 'errorMessage';
-                errorDiv.style.cssText = 'color: red; margin: 10px 0; padding: 10px; background-color: #ffe6e6; border: 1px solid #ffcccc; border-radius: 5px;';
-                chatForm.parentNode.insertBefore(errorDiv, chatForm);
-            }
-            errorDiv.textContent = 'Error: ' + message;
-            
-            // Auto-hide after 5 seconds
-            setTimeout(() => {
-                if (errorDiv) {
-                    errorDiv.remove();
-                }
-            }, 5000);
-        }
-        
-        
-        /**
-         * Scroll to the last user message
-         */
-        function scrollToLastUserMessage() {
-            const userMessages = chatArea.querySelectorAll('.message[role="user"]');
-            if (userMessages.length > 0) {
-                const lastUserMessage = userMessages[userMessages.length - 1];
-                
-                // Calculate the position of the user message relative to the chat area's content
-                const messagesContainer = chatArea.querySelector('.messages-container');
-                let targetScrollTop;
-                
-                if (messagesContainer) {
-                    // Get the position of the message relative to the messages container
-                    const messageOffsetTop = lastUserMessage.offsetTop - messagesContainer.offsetTop;
-                    targetScrollTop = messageOffsetTop;
-                } else {
-                    // Fallback: use the message's position relative to chat area
-                    targetScrollTop = lastUserMessage.offsetTop;
-                }
-                
-                chatArea.scrollTo({
-                    top: Math.max(0, targetScrollTop),
-                    behavior: 'smooth'
-                });
-            } else {
-                // Fallback to bottom if no user messages
-                chatArea.scrollTo({
-                    top: chatArea.scrollHeight,
-                    behavior: 'smooth'
-                });
-            }
-        }
-        
-        /**
-         * Toggle sidebar visibility on mobile/tablet
-         */
-        function toggleSidebar() {
-            if (sidebar) {
-                sidebar.classList.toggle('show');
-                
-                // Update button text based on sidebar state
-                if (sidebar.classList.contains('show')) {
-                    sidebarToggle.textContent = '✕ Hide Sessions';
-                } else {
-                    sidebarToggle.textContent = '☰ Sessions';
-                }
-            }
-        }
-        
-    });
-</script>
+<script src="assets/js/index.js"></script>
 
 </html>
