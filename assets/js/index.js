@@ -31,7 +31,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const mealPreferencesForm = document.getElementById('mealPreferencesForm');
     const sendPreferencesButton = document.getElementById('sendPreferencesButton');
     const chatContainer = document.querySelector('.chat-container');
-    
+    const skipFormButton = document.getElementById('skipFormButton');
+    const openPreferencesButton = document.getElementById('openPreferencesButton');
+
+
     // Add click handlers to existing session items
     addSessionClickHandlers();
     
@@ -99,6 +102,69 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleSidebar();
         });
     }
+
+    if (skipFormButton) {
+  skipFormButton.addEventListener('click', function () {
+    skipMealForm();
+  });
+}
+
+if (openPreferencesButton) {
+  openPreferencesButton.addEventListener('click', function () {
+    reopenMealForm();
+  });
+}
+
+function skipMealForm() {
+  // remember the choice for this tab/session
+  sessionStorage.setItem('mealFormSkipped', '1');
+
+  // flip UI to chat mode
+  if (mealPreferencesForm) mealPreferencesForm.style.display = 'none';
+  if (chatContainer) chatContainer.classList.remove('form-only');
+  if (chatForm) chatForm.style.display = 'block';
+  if (chatArea) chatArea.style.display = 'block';
+
+  // show the “open prefs” button so user can change mind
+  if (openPreferencesButton) openPreferencesButton.style.display = 'inline-block';
+
+  // optional: drop a tiny system notice in the chat
+  addSystemNotice('You skipped the preferences form. You can chat now, or set preferences any time.');
+}
+
+function reopenMealForm() {
+  sessionStorage.removeItem('mealFormSkipped');
+
+  // flip UI back to form mode
+  if (mealPreferencesForm) mealPreferencesForm.style.display = 'block';
+  if (chatContainer) chatContainer.classList.add('form-only');
+  if (chatForm) chatForm.style.display = 'none';
+  if (chatArea) chatArea.style.display = 'none';
+
+  // hide “open prefs” button again
+  if (openPreferencesButton) openPreferencesButton.style.display = 'none';
+}
+
+// minimal system notice helper (no backend call)
+function addSystemNotice(text) {
+  if (!chatArea) return;
+
+  let messagesContainer = chatArea.querySelector('.messages-container');
+  if (!messagesContainer) {
+    messagesContainer = document.createElement('div');
+    messagesContainer.className = 'messages-container';
+    chatArea.appendChild(messagesContainer);
+  }
+
+  const div = document.createElement('div');
+  div.className = 'message';
+  div.setAttribute('role', 'system');
+  div.innerHTML = `<em>${text}</em>`;
+  messagesContainer.appendChild(div);
+
+  chatArea.scrollTo({ top: chatArea.scrollHeight, behavior: 'smooth' });
+}
+    
     
     /**
      * Send a message to the AI via AJAX
@@ -603,39 +669,34 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function checkFormVisibility() {
         if (!mealPreferencesForm) return;
-        
-        // Check if there are any messages in the chat area
+
         const messagesContainer = chatArea.querySelector('.messages-container');
         const welcomeMessage = chatArea.querySelector('p');
-        
-        // Check if we have actual conversation messages (not just welcome message)
         const hasConversationMessages = messagesContainer && messagesContainer.children.length > 0;
-        const hasWelcomeMessage = welcomeMessage && welcomeMessage.textContent.includes('Start planleggingen ved å skrive inn dine preferanser nedenfor.');
-        // If there are conversation messages, hide the meal form and show chat form
-        if (hasConversationMessages) {
-            mealPreferencesForm.style.display = 'none';
-            if (chatContainer) {
-                chatContainer.classList.remove('form-only');
-            }
-            if (chatForm) {
-                chatForm.style.display = 'block';
-            }
-            // Show chat area when there are messages
-            chatArea.style.display = 'block';
-        }
-        // If there's only a welcome message or no messages, show the meal form and hide chat form
-        else if (hasWelcomeMessage || (!hasConversationMessages && !hasWelcomeMessage)) {
-            mealPreferencesForm.style.display = 'block';
-            if (chatContainer) {
-                chatContainer.classList.add('form-only');
-            }
-            if (chatForm) {
-                chatForm.style.display = 'none';
-            }
-            // Hide chat area when showing meal preferences form
-            chatArea.style.display = 'none';
-        }
+        const hasWelcomeMessage =
+        welcomeMessage &&
+        welcomeMessage.textContent.includes('Start planleggingen ved å skrive inn dine preferanser nedenfor.');
+
+        // NEW: respect "skipped" (sessionStorage flag)
+        const skipped = sessionStorage.getItem('mealFormSkipped') === '1';
+
+        if (hasConversationMessages || skipped) {
+         // show chat, hide form
+        mealPreferencesForm.style.display = 'none';
+        if (chatContainer) chatContainer.classList.remove('form-only');
+        if (chatForm) chatForm.style.display = 'block';
+        chatArea.style.display = 'block';
+        if (openPreferencesButton) openPreferencesButton.style.display = 'inline-block';
+        } else if (hasWelcomeMessage || (!hasConversationMessages && !hasWelcomeMessage)) {
+         // show form, hide chat
+        mealPreferencesForm.style.display = 'block';
+        if (chatContainer) chatContainer.classList.add('form-only');
+        if (chatForm) chatForm.style.display = 'none';
+        chatArea.style.display = 'none';
+        if (openPreferencesButton) openPreferencesButton.style.display = 'none';
     }
+}
+
     
     /**
      * Toggle sidebar visibility on mobile/tablet
