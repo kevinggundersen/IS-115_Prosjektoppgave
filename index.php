@@ -135,7 +135,7 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
 
 <head>
     <title>Kunnskapsgryta</title>
-    <link rel="icon" type="image/png" href="assets/images/Kunnskapsgryta_Uten_bakgrunn_Ingen_Tekst.png">
+    <link rel="icon" type="image/png" href="assets/images/Kunnskapsgryta_Uten_bakgrunn_Ingen_Tekst_zoom.png">
     
     <!-- External CSS - Link to our custom stylesheet -->
     <link rel="stylesheet" href="assets/css/style.css">
@@ -282,6 +282,21 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                     <!-- amount people -->
                     <label for="peopleAmount">Hvor mange lager du for?</label>
                     <input type="number" id="peopleAmount" name="peopleAmount" min="1" max="10" placeholder="F.eks. 3"><br>
+                    
+                    <!-- Nutritional constraints -->
+                    <h4 style="margin-top: 20px; margin-bottom: 10px; color: #333;">Ernæringsmål (valgfritt)</h4>
+                    
+                    <!-- Max calories per meal -->
+                    <label for="maxCaloriesPerMeal">Maksimalt antall kalorier per måltid:</label>
+                    <input type="number" id="maxCaloriesPerMeal" name="maxCaloriesPerMeal" min="0" step="10" placeholder="F.eks. 500"><br>
+                    
+                    <!-- Max calories per day -->
+                    <label for="maxCaloriesPerDay">Maksimalt antall kalorier per dag:</label>
+                    <input type="number" id="maxCaloriesPerDay" name="maxCaloriesPerDay" min="0" step="50" placeholder="F.eks. 2000"><br>
+                    
+                    <!-- Protein goal -->
+                    <label for="proteinGoal">Proteinmål per dag (gram):</label>
+                    <input type="number" id="proteinGoal" name="proteinGoal" min="0" step="5" placeholder="F.eks. 80"><br>
                     
                     <!-- Submit button -->
                     <button type="submit" id="sendPreferencesButton">Send inn preferanser</button>

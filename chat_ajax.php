@@ -15,6 +15,9 @@ require_once 'vendor/autoload.php';
 // Include session management functions
 require_once 'includes/session_functions.php';
 
+// Include nutritional data service
+require_once 'includes/API_matvaretabellen.php';
+
 // Import necessary classes
 use Gemini\Enums\ModelVariation;
 use Gemini\GeminiHelper;
@@ -229,6 +232,11 @@ function handleSendMealPreferences($client, $parsedown, $instructionType) {
     $mealsPerDay = $_POST['mealsPerDay'] ?? 'Ikke spesifisert';
     $peopleAmount = $_POST['peopleAmount'] ?? 'Ikke spesifisert';
     
+    // Nutritional constraints
+    $maxCaloriesPerMeal = $_POST['maxCaloriesPerMeal'] ?? '';
+    $maxCaloriesPerDay = $_POST['maxCaloriesPerDay'] ?? '';
+    $proteinGoal = $_POST['proteinGoal'] ?? '';
+    
     // Handle custom diet type
     if ($dietType === 'annet' && !empty($dietTypeOther)) {
         $dietType = $dietTypeOther;
@@ -261,7 +269,9 @@ function handleSendMealPreferences($client, $parsedown, $instructionType) {
         Tid til matlaging: {$cookTime}, 
         Antall måltider per dag: {$mealsPerDay},
         Antall personer: {$peopleAmount},
-        ";
+        Maksimalt kalorier per måltid: {$maxCaloriesPerMeal},
+        Maksimalt kalorier per dag: {$maxCaloriesPerDay},
+        Proteinmål per dag (gram): {$proteinGoal}";
     
     // Initialize chat history if it doesn't exist
     if (!isset($_SESSION['chat_history'])) {
@@ -284,6 +294,50 @@ function handleSendMealPreferences($client, $parsedown, $instructionType) {
         $configFile = __DIR__ . "/config/instructions_default.txt";
     }
     $systemInstructions = file_get_contents($configFile);
+    
+    // Add nutritional data context for all users
+    $nutritionalService = new NutritionalDataService();
+    $allFoods = $nutritionalService->getAllFoods();
+    
+    if ($allFoods && isset($allFoods['foods'])) {
+        // Format all foods
+        $formattedFoods = [];
+        foreach ($allFoods['foods'] as $food) {
+            $formattedFoods[] = $nutritionalService->formatFoodData($food);
+        }
+        
+        $nutritionalContext = "\n\n**NUTRITIONAL DATABASE CONTEXT:**\n";
+        $nutritionalContext .= "You have access to the complete Norwegian Food Database with " . count($formattedFoods) . " foods.\n\n";
+        
+        // Create a comprehensive food database with ALL foods
+        $nutritionalContext .= "**COMPLETE FOOD DATABASE:**\n";
+        $nutritionalContext .= "Format: [Food Name] - [Calories] kcal, [Protein]g protein, [Fat]g fat, [Carbs]g carbs per 100g\n\n";
+        
+        // Include ALL foods, organized by official food groups
+        $categorizedFoods = $nutritionalService->categorizeFoodsByGroup($formattedFoods);
+        
+        foreach ($categorizedFoods as $category => $foods) {
+            if (!empty($foods)) {
+                $nutritionalContext .= "**{$category} (" . count($foods) . " foods):**\n";
+                foreach ($foods as $food) {
+                    $nutritionalContext .= "• {$food['name']} - {$food['nutrition']['calories']} kcal, {$food['nutrition']['protein']}g protein, {$food['nutrition']['fat']}g fat, {$food['nutrition']['carbs']}g carbs\n";
+                }
+                $nutritionalContext .= "\n";
+            }
+        }
+        
+        $nutritionalContext .= "**INSTRUCTIONS:**\n";
+        $nutritionalContext .= "- You have access to ALL " . count($formattedFoods) . " foods listed above\n";
+        $nutritionalContext .= "- Use the exact nutritional values provided for accurate calorie calculations\n";
+        $nutritionalContext .= "- Respect the user's dietary preferences and restrictions from their input\n";
+        $nutritionalContext .= "- Avoid suggesting foods that don't match their diet type or allergies\n";
+        $nutritionalContext .= "- Calculate total calories per meal by summing individual ingredient calories\n";
+        $nutritionalContext .= "- Provide nutritional breakdowns for each meal\n";
+        $nutritionalContext .= "- You can suggest any combination of suitable foods from the database\n";
+        $nutritionalContext .= "- Search through all categories to find the best food combinations\n";
+        
+        $systemInstructions .= $nutritionalContext;
+    }
     
     // Create chat session
     $chat = $client
