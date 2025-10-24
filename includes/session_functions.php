@@ -4,15 +4,7 @@
  * 
  * This file contains all the session management functions used throughout
  * the chat application. These functions handle storing, retrieving, and
- * displaying chat sessions. By putting these functions in a separate file,
- * the code can be reused in multiple places without duplication.
- * 
- * A "session" in this context refers to a single conversation thread
- * between the user and the AI. Each session contains:
- * - A unique ID
- * - A title (usually the first user message)
- * - Creation and update timestamps
- * - All the messages in that conversation
+ * displaying chat sessions.
  */
 
 /**
@@ -37,8 +29,7 @@ function initializeSessions() {
  * 
  * This function looks through all messages in a session and finds the
  * first message sent by the user. It uses that message as the session title.
- * If the message is longer than 50 characters, it gets shortened and
- * "..." is added to indicate truncation.
+ * If the message is longer than 50 characters, it gets shortened and "..." is added.
  * 
  * @param array $messages Array of message objects, each containing 'role' and 'content'
  * @return string The title for the session
@@ -69,10 +60,8 @@ function createSessionTitle($messages) {
 /**
  * Get all chat sessions sorted by most recent activity
  * 
- * This function retrieves all stored chat sessions and sorts them
+ * This function finds all stored chat sessions and sorts them
  * so that the most recently updated session appears first.
- * This makes it easy to show the most recent conversations at the top
- * of the session list.
  * 
  * @return array Array of session objects, sorted by update time (newest first)
  */
@@ -107,7 +96,7 @@ function getAllSessions() {
  * The function also handles the case where there are no sessions to display.
  * 
  * @param array $sessions Array of session objects to display
- * @param string|null $currentSessionId The ID of the currently active session (optional)
+ * @param string|null $currentSessionId The ID of the currently active session
  * @return string HTML code for the session list
  */
 function renderSessionList($sessions, $currentSessionId = null) {

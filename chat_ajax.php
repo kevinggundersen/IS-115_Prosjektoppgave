@@ -96,12 +96,63 @@ switch ($action) {
  * Handle sending a message to the AI
  */
 function handleSendMessage($client, $parsedown, $instructionType) {
+    // Rate limiting - prevent spam
+    $currentTime = time();
+    $lastRequestTime = $_SESSION['last_request_time'] ?? 0;
+    $minInterval = 2; // Minimum 1 second between requests (shorter than meal preferences)
+    
+    if ($currentTime - $lastRequestTime < $minInterval) {
+        sendResponse(false, null, 'Vennligst vent en stund før du sender en ny forespørsel');
+    }
+    $_SESSION['last_request_time'] = $currentTime;
+    
     // Validate input
     if (!isset($_POST['message']) || empty(trim($_POST['message']))) {
-        sendResponse(false, null, 'Message is required');
+        sendResponse(false, null, 'Melding er påkrevd');
     }
     
-    $userInput = trim($_POST['message']);
+    // Sanitize and validate message input
+    $userInput = sanitizeInput($_POST['message'], 2000); // Allow longer messages for chat
+    
+    // Additional validation for message content
+    if (empty($userInput) || $userInput === 'Ikke spesifisert') {
+        sendResponse(false, null, 'Meldingen kan ikke være tom');
+    }
+    
+    // Check for excessive repetition (potential spam)
+    $words = explode(' ', $userInput);
+    if (count($words) > 3) {
+        $wordCounts = array_count_values($words);
+        foreach ($wordCounts as $word => $count) {
+            if ($count > count($words) * 0.5) { // If any word appears more than 50% of the time
+                sendResponse(false, null, 'Meldingen inneholder for mye repetisjon');
+            }
+        }
+    }
+    
+    // Check for excessive special characters (potential obfuscation)
+    $specialCharCount = preg_match_all('/[^a-zA-Z0-9\sæøåÆØÅ.,!?()-]/', $userInput);
+    if ($specialCharCount > strlen($userInput) * 0.3) { // More than 30% special characters
+        sendResponse(false, null, 'Meldingen inneholder for mange spesialtegn');
+    }
+    
+    // Check for suspicious patterns that might indicate injection attempts
+    $suspiciousPatterns = [
+        '/<script[^>]*>.*?<\/script>/i',
+        '/javascript:/i',
+        '/on\w+\s*=/i',
+        '/<iframe[^>]*>.*?<\/iframe>/i',
+        '/<object[^>]*>.*?<\/object>/i',
+        '/<embed[^>]*>/i',
+        '/<link[^>]*>/i',
+        '/<meta[^>]*>/i'
+    ];
+    
+    foreach ($suspiciousPatterns as $pattern) {
+        if (preg_match($pattern, $userInput)) {
+            sendResponse(false, null, 'Meldingen inneholder ikke-tillatt innhold');
+        }
+    }
     
     // Initialize chat history if it doesn't exist
     if (!isset($_SESSION['chat_history'])) {
@@ -118,6 +169,11 @@ function handleSendMessage($client, $parsedown, $instructionType) {
         $history[] = Content::parse(part: $message['content'], role: $role);
     }
     
+    // Validate and sanitize instruction type to prevent path traversal
+    $allowedInstructionTypes = ['default', 'mealplanner', 'tutor', 'casual', 'debugger'];
+    if (!in_array($instructionType, $allowedInstructionTypes)) {
+        $instructionType = 'default';
+    }
     
     // Load system instructions
     $configFile = __DIR__ . "/config/instructions_{$instructionType}.txt";
@@ -213,49 +269,175 @@ function handleSendMessage($client, $parsedown, $instructionType) {
 /**
  * Handle sending meal preferences to the AI
  */
+/**
+ * Sanitize input data to prevent XSS and other security issues
+ */
+function sanitizeInput($input, $maxLength = 1000, $allowHtml = false) {
+    if (is_array($input)) {
+        return array_map(function($item) use ($maxLength, $allowHtml) {
+            return sanitizeInput($item, $maxLength, $allowHtml);
+        }, $input);
+    }
+    
+    if (!is_string($input)) {
+        return $input;
+    }
+    
+    // Trim whitespace
+    $input = trim($input);
+    
+    // Limit length
+    if (strlen($input) > $maxLength) {
+        $input = substr($input, 0, $maxLength);
+    }
+    
+    // Remove null bytes and control characters (except newlines and tabs)
+    $input = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $input);
+    
+    if ($allowHtml) {
+        // Allow basic HTML but sanitize dangerous tags
+        $input = strip_tags($input, '<p><br><strong><em><ul><ol><li>');
+    } else {
+        // Escape HTML entities for display
+        $input = htmlspecialchars($input, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    }
+    
+    return $input;
+}
+
+/**
+ * Validate numeric input
+ */
+function validateNumericInput($input, $min = 0, $max = 999999) {
+    if (empty($input) || $input === 'Ikke spesifisert') {
+        return '';
+    }
+    
+    // Remove any non-numeric characters except decimal point
+    $cleaned = preg_replace('/[^0-9.]/', '', $input);
+    
+    if (!is_numeric($cleaned)) {
+        return '';
+    }
+    
+    $value = floatval($cleaned);
+    
+    if ($value < $min || $value > $max) {
+        return '';
+    }
+    
+    return $value;
+}
+
+/**
+ * Validate and sanitize diet type
+ */
+function validateDietType($dietType, $dietTypeOther) {
+    $allowedDietTypes = [
+        'Ingen spesielle krav',
+        'Vegetarisk',
+        'Vegansk',
+        'Glutenfri',
+        'Laktosefri',
+        'Keto',
+        'Paleo',
+        'Lavkarbo',
+        'annet'
+    ];
+    
+    if (in_array($dietType, $allowedDietTypes)) {
+        if ($dietType === 'annet' && !empty($dietTypeOther)) {
+            return sanitizeInput($dietTypeOther, 100);
+        }
+        return $dietType;
+    }
+    
+    return 'Ingen spesielle krav';
+}
+
+/**
+ * Validate and sanitize allergies
+ */
+function validateAllergies($allergies, $allergiesOther) {
+    $allowedAllergies = [
+        'Nøtter',
+        'Melk',
+        'Egg',
+        'Fisk',
+        'Skalldyr',
+        'Soya',
+        'Gluten',
+        'Sesam',
+        'annet'
+    ];
+    
+    if (!is_array($allergies)) {
+        return [];
+    }
+    
+    $validAllergies = [];
+    foreach ($allergies as $allergy) {
+        if (in_array($allergy, $allowedAllergies)) {
+            if ($allergy === 'annet' && !empty($allergiesOther)) {
+                $validAllergies[] = sanitizeInput($allergiesOther, 100);
+            } elseif ($allergy !== 'annet') {
+                $validAllergies[] = $allergy;
+            }
+        }
+    }
+    
+    return $validAllergies;
+}
+
 function handleSendMealPreferences($client, $parsedown, $instructionType) {
+    // Rate limiting - prevent spam
+    $currentTime = time();
+    $lastRequestTime = $_SESSION['last_request_time'] ?? 0;
+    $minInterval = 2; // Minimum 2 seconds between requests
+    
+    if ($currentTime - $lastRequestTime < $minInterval) {
+        sendResponse(false, null, 'Vennligst vent en stund før du sender en ny forespørsel');
+    }
+    $_SESSION['last_request_time'] = $currentTime;
+    
     // Validate required fields
     if (!isset($_POST['budget']) || empty(trim($_POST['budget']))) {
         sendResponse(false, null, 'Budget is required');
     }
     
-    // Collect form data
-    $dietType = $_POST['dietType'] ?? 'Ingen spesielle krav';
-    $dietTypeOther = $_POST['dietTypeOther'] ?? '';
-    $allergies = $_POST['allergies'] ?? [];
-    $allergiesOther = $_POST['allergiesOther'] ?? '';
-    $likes = $_POST['likes'] ?? 'Ikke spesifisert';
-    $dislikes = $_POST['dislikes'] ?? 'Ikke spesifisert';
-    $budget = trim($_POST['budget']);
-    $equipment = $_POST['equipment'] ?? 'Ikke spesifisert';
-    $cookTime = $_POST['cookTime'] ?? 'Ikke spesifisert';
-    $mealsPerDay = $_POST['mealsPerDay'] ?? 'Ikke spesifisert';
-    $peopleAmount = $_POST['peopleAmount'] ?? 'Ikke spesifisert';
+    // Sanitize and validate form data
+    $dietType = validateDietType(
+        sanitizeInput($_POST['dietType'] ?? 'Ingen spesielle krav', 50),
+        sanitizeInput($_POST['dietTypeOther'] ?? '', 100)
+    );
     
-    // Nutritional constraints
-    $maxCaloriesPerMeal = $_POST['maxCaloriesPerMeal'] ?? '';
-    $maxCaloriesPerDay = $_POST['maxCaloriesPerDay'] ?? '';
-    $proteinGoal = $_POST['proteinGoal'] ?? '';
+    $allergies = validateAllergies(
+        $_POST['allergies'] ?? [],
+        sanitizeInput($_POST['allergiesOther'] ?? '', 100)
+    );
     
-    // Handle custom diet type
-    if ($dietType === 'annet' && !empty($dietTypeOther)) {
-        $dietType = $dietTypeOther;
+    $likes = sanitizeInput($_POST['likes'] ?? 'Ikke spesifisert', 500);
+    $dislikes = sanitizeInput($_POST['dislikes'] ?? 'Ikke spesifisert', 500);
+    $budget = sanitizeInput(trim($_POST['budget']), 100);
+    $equipment = sanitizeInput($_POST['equipment'] ?? 'Ikke spesifisert', 200);
+    $cookTime = sanitizeInput($_POST['cookTime'] ?? 'Ikke spesifisert', 100);
+    $mealsPerDay = sanitizeInput($_POST['mealsPerDay'] ?? 'Ikke spesifisert', 50);
+    $peopleAmount = sanitizeInput($_POST['peopleAmount'] ?? 'Ikke spesifisert', 50);
+    
+    // Nutritional constraints - validate as numeric
+    $maxCaloriesPerMeal = validateNumericInput($_POST['maxCaloriesPerMeal'] ?? '', 0, 10000);
+    $maxCaloriesPerDay = validateNumericInput($_POST['maxCaloriesPerDay'] ?? '', 0, 50000);
+    $proteinGoal = validateNumericInput($_POST['proteinGoal'] ?? '', 0, 1000);
+    
+    // Format allergies array (already sanitized and validated)
+    $allergiesString = !empty($allergies) ? implode(', ', $allergies) : 'Ingen allergier';
+    
+    // Additional validation for budget
+    if (empty($budget) || $budget === 'Ikke spesifisert') {
+        sendResponse(false, null, 'Budsjett er påkrevd og må spesifiseres');
     }
     
-    // Handle custom allergies
-    $allergiesList = $allergies;
-    if (in_array('annet', $allergies) && !empty($allergiesOther)) {
-        // Remove 'annet' from the array and add the custom allergy
-        $allergiesList = array_filter($allergies, function($allergy) {
-            return $allergy !== 'annet';
-        });
-        $allergiesList[] = $allergiesOther;
-    }
-    
-    // Format allergies array
-    $allergiesString = !empty($allergiesList) ? implode(', ', $allergiesList) : 'Ingen allergier';
-    
-    // Generate the formatted message in PHP
+    // Generate the formatted message in PHP with sanitized data
     $currentDate = date('Y.m.d');
     $userInput = 
         "
@@ -269,9 +451,9 @@ function handleSendMealPreferences($client, $parsedown, $instructionType) {
         Tid til matlaging: {$cookTime}, 
         Antall måltider per dag: {$mealsPerDay},
         Antall personer: {$peopleAmount},
-        Maksimalt kalorier per måltid: {$maxCaloriesPerMeal},
-        Maksimalt kalorier per dag: {$maxCaloriesPerDay},
-        Proteinmål per dag (gram): {$proteinGoal}";
+        Maksimalt kalorier per måltid: " . ($maxCaloriesPerMeal ?: 'Ikke spesifisert') . ",
+        Maksimalt kalorier per dag: " . ($maxCaloriesPerDay ?: 'Ikke spesifisert') . ",
+        Proteinmål per dag (gram): " . ($proteinGoal ?: 'Ikke spesifisert');
     
     // Initialize chat history if it doesn't exist
     if (!isset($_SESSION['chat_history'])) {
@@ -286,6 +468,12 @@ function handleSendMealPreferences($client, $parsedown, $instructionType) {
     foreach ($_SESSION['chat_history'] as $message) {
         $role = $message['role'] === 'user' ? Role::USER : Role::MODEL;
         $history[] = Content::parse(part: $message['content'], role: $role);
+    }
+    
+    // Validate and sanitize instruction type to prevent path traversal
+    $allowedInstructionTypes = ['default', 'mealplanner', 'tutor', 'casual', 'debugger'];
+    if (!in_array($instructionType, $allowedInstructionTypes)) {
+        $instructionType = 'default';
     }
     
     // Load system instructions

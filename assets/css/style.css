@@ -1,17 +1,18 @@
 
 /**
- * IS-115 Prosjektoppgave - Chat Application Styles
+ * Chat Application Styles
  * 
  * This stylesheet defines the visual appearance of the AI chat application.
  * It creates a clean, modern interface with proper spacing, colors, and
  * responsive design elements.
  * 
- * Key Design Features:
- * - Clean, minimal design with good contrast
- * - Responsive layout that works on different screen sizes
- * - Distinct styling for user vs AI messages
- * - Syntax highlighting support for code blocks
- * - Scrollable chat area with proper overflow handling
+ * Main sections:
+ * - Header with branding
+ * - Sidebar with session list
+ * - Chat area with conversation history
+ * - Meal preferences form
+ * - Chat input form
+ * - Loading indicator
  */
 
 /* ==========================================================================
@@ -32,6 +33,7 @@ body {
     overflow: hidden; /* Prevent any page-level scrolling */
 }
 
+/* Header styling */
 .header {
     /*background-color: #f5eedd;*/
     margin-bottom: 20px;
@@ -57,12 +59,12 @@ body {
 
 /* Branding section - aligns image to the left of text */
 .branding {
-    display: flex !important;          /* Use flexbox for horizontal layout */
-    flex-direction: row !important;    /* Ensure horizontal direction */
+    display: flex !important;          /* Flexbox for horizontal layout */
+    flex-direction: row !important;    /* Horizontal direction */
     align-items: center !important;    /* Vertically center align items */
     gap: 15px !important;             /* Space between image and text */
   /* Space below branding section */
-    width: 100% !important;           /* Ensure full width */
+    width: 100% !important;           /* Full width */
 }
 
 .branding-image {
@@ -72,7 +74,7 @@ body {
 
 .branding-text {
     flex: 1 !important;               /* Allow text to take remaining space */
-    display: inline-block !important; /* Ensure proper display */
+    display: inline-block !important;
 
 }
 
