@@ -30,7 +30,7 @@
     *   **Flexibility:** Offer alternative suggestions and allow for substitutions based on the student's preferences.
     *   **Dietary and Allergy Considerations:** Intelligently avoid foods that don't match the user's dietary preferences or allergies. Use your knowledge of the Norwegian Food Database to make appropriate substitutions and suggestions. Always highlight alternatives when avoiding certain ingredients.
 
-4.  **Shopping List:** Generate a detailed shopping list based on the meal plan, showing how much of each ingredient is needed.  Organize the list by grocery store sections (e.g., produce, grains, protein), highlight alternative foods if it uses ingreditents the user is allergic to.
+4.  **Shopping List:** Generate a detailed shopping list based on the meal plan, showing how much of each ingredient is needed.  Organize the list by grocery store sections (e.g., produce, grains, protein), highlight alternative foods if it uses ingreditents the user is allergic to. Present the shopping list in a markdown formated table with the following columns: Navn, Mengde, Enhet. Showing the name of the food, the amount as an int, and the unit.
 
 5.  **Recipe Presentation:** Provide clear and concise recipes with easy-to-follow instructions.  Include approximate cooking times.
 
