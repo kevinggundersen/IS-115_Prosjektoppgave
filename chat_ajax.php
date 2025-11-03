@@ -18,6 +18,9 @@ require_once 'includes/session_functions.php';
 // Include nutritional data service
 require_once 'includes/API_matvaretabellen.php';
 
+// Include validation functions
+require_once 'includes/validation.php';
+
 // Import necessary classes
 use Gemini\Enums\ModelVariation;
 use Gemini\GeminiHelper;
@@ -114,44 +117,10 @@ function handleSendMessage($client, $parsedown, $instructionType) {
     // Sanitize and validate message input
     $userInput = sanitizeInput($_POST['message'], 2000); // Allow longer messages for chat
     
-    // Additional validation for message content
-    if (empty($userInput) || $userInput === 'Ikke spesifisert') {
-        sendResponse(false, null, 'Meldingen kan ikke være tom');
-    }
-    
-    // Check for excessive repetition (potential spam)
-    $words = explode(' ', $userInput);
-    if (count($words) > 3) {
-        $wordCounts = array_count_values($words);
-        foreach ($wordCounts as $word => $count) {
-            if ($count > count($words) * 0.5) { // If any word appears more than 50% of the time
-                sendResponse(false, null, 'Meldingen inneholder for mye repetisjon');
-            }
-        }
-    }
-    
-    // Check for excessive special characters (potential obfuscation)
-    $specialCharCount = preg_match_all('/[^a-zA-Z0-9\sæøåÆØÅ.,!?()-]/', $userInput);
-    if ($specialCharCount > strlen($userInput) * 0.3) { // More than 30% special characters
-        sendResponse(false, null, 'Meldingen inneholder for mange spesialtegn');
-    }
-    
-    // Check for suspicious patterns that might indicate injection attempts
-    $suspiciousPatterns = [
-        '/<script[^>]*>.*?<\/script>/i',
-        '/javascript:/i',
-        '/on\w+\s*=/i',
-        '/<iframe[^>]*>.*?<\/iframe>/i',
-        '/<object[^>]*>.*?<\/object>/i',
-        '/<embed[^>]*>/i',
-        '/<link[^>]*>/i',
-        '/<meta[^>]*>/i'
-    ];
-    
-    foreach ($suspiciousPatterns as $pattern) {
-        if (preg_match($pattern, $userInput)) {
-            sendResponse(false, null, 'Meldingen inneholder ikke-tillatt innhold');
-        }
+    // Validate message content using the new validation function
+    $messageValidation = validateMessageContent($userInput, 2000);
+    if (!$messageValidation['valid']) {
+        sendResponse(false, null, $messageValidation['error']);
     }
     
     // Initialize chat history if it doesn't exist
@@ -170,10 +139,7 @@ function handleSendMessage($client, $parsedown, $instructionType) {
     }
     
     // Validate and sanitize instruction type to prevent path traversal
-    $allowedInstructionTypes = ['default', 'mealplanner', 'tutor', 'casual', 'debugger'];
-    if (!in_array($instructionType, $allowedInstructionTypes)) {
-        $instructionType = 'default';
-    }
+    $instructionType = validateInstructionType($instructionType);
     
     // Load system instructions
     $configFile = __DIR__ . "/config/instructions_{$instructionType}.txt";
@@ -269,125 +235,6 @@ function handleSendMessage($client, $parsedown, $instructionType) {
 /**
  * Handle sending meal preferences to the AI
  */
-/**
- * Sanitize input data to prevent XSS and other security issues
- */
-function sanitizeInput($input, $maxLength = 1000, $allowHtml = false) {
-    if (is_array($input)) {
-        return array_map(function($item) use ($maxLength, $allowHtml) {
-            return sanitizeInput($item, $maxLength, $allowHtml);
-        }, $input);
-    }
-    
-    if (!is_string($input)) {
-        return $input;
-    }
-    
-    // Trim whitespace
-    $input = trim($input);
-    
-    // Limit length
-    if (strlen($input) > $maxLength) {
-        $input = substr($input, 0, $maxLength);
-    }
-    
-    // Remove null bytes and control characters (except newlines and tabs)
-    $input = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $input);
-    
-    if ($allowHtml) {
-        // Allow basic HTML but sanitize dangerous tags
-        $input = strip_tags($input, '<p><br><strong><em><ul><ol><li>');
-    } else {
-        // Escape HTML entities for display
-        $input = htmlspecialchars($input, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-    }
-    
-    return $input;
-}
-
-/**
- * Validate numeric input
- */
-function validateNumericInput($input, $min = 0, $max = 999999) {
-    if (empty($input) || $input === 'Ikke spesifisert') {
-        return '';
-    }
-    
-    // Remove any non-numeric characters except decimal point
-    $cleaned = preg_replace('/[^0-9.]/', '', $input);
-    
-    if (!is_numeric($cleaned)) {
-        return '';
-    }
-    
-    $value = floatval($cleaned);
-    
-    if ($value < $min || $value > $max) {
-        return '';
-    }
-    
-    return $value;
-}
-
-/**
- * Validate and sanitize diet type
- */
-function validateDietType($dietType, $dietTypeOther) {
-    $allowedDietTypes = [
-        'Ingen spesielle krav',
-        'Vegetarisk',
-        'Vegansk',
-        'Glutenfri',
-        'Laktosefri',
-        'Keto',
-        'Paleo',
-        'Lavkarbo',
-        'annet'
-    ];
-    
-    if (in_array($dietType, $allowedDietTypes)) {
-        if ($dietType === 'annet' && !empty($dietTypeOther)) {
-            return sanitizeInput($dietTypeOther, 100);
-        }
-        return $dietType;
-    }
-    
-    return 'Ingen spesielle krav';
-}
-
-/**
- * Validate and sanitize allergies
- */
-function validateAllergies($allergies, $allergiesOther) {
-    $allowedAllergies = [
-        'Nøtter',
-        'Melk',
-        'Egg',
-        'Fisk',
-        'Skalldyr',
-        'Soya',
-        'Gluten',
-        'Sesam',
-        'annet'
-    ];
-    
-    if (!is_array($allergies)) {
-        return [];
-    }
-    
-    $validAllergies = [];
-    foreach ($allergies as $allergy) {
-        if (in_array($allergy, $allowedAllergies)) {
-            if ($allergy === 'annet' && !empty($allergiesOther)) {
-                $validAllergies[] = sanitizeInput($allergiesOther, 100);
-            } elseif ($allergy !== 'annet') {
-                $validAllergies[] = $allergy;
-            }
-        }
-    }
-    
-    return $validAllergies;
-}
 
 function handleSendMealPreferences($client, $parsedown, $instructionType) {
     // Rate limiting - prevent spam
@@ -400,60 +247,35 @@ function handleSendMealPreferences($client, $parsedown, $instructionType) {
     }
     $_SESSION['last_request_time'] = $currentTime;
     
-    // Validate required fields
-    if (!isset($_POST['budget']) || empty(trim($_POST['budget']))) {
-        sendResponse(false, null, 'Budget is required');
+    // Validate and sanitize meal preferences data
+    $validationResult = validateMealPreferencesData($_POST);
+    
+    if (!empty($validationResult['errors'])) {
+        sendResponse(false, null, implode(', ', $validationResult['errors']));
     }
     
-    // Sanitize and validate form data
-    $dietType = validateDietType(
-        sanitizeInput($_POST['dietType'] ?? 'Ingen spesielle krav', 50),
-        sanitizeInput($_POST['dietTypeOther'] ?? '', 100)
-    );
-    
-    $allergies = validateAllergies(
-        $_POST['allergies'] ?? [],
-        sanitizeInput($_POST['allergiesOther'] ?? '', 100)
-    );
-    
-    $likes = sanitizeInput($_POST['likes'] ?? 'Ikke spesifisert', 500);
-    $dislikes = sanitizeInput($_POST['dislikes'] ?? 'Ikke spesifisert', 500);
-    $budget = sanitizeInput(trim($_POST['budget']), 100);
-    $equipment = sanitizeInput($_POST['equipment'] ?? 'Ikke spesifisert', 200);
-    $cookTime = sanitizeInput($_POST['cookTime'] ?? 'Ikke spesifisert', 100);
-    $mealsPerDay = sanitizeInput($_POST['mealsPerDay'] ?? 'Ikke spesifisert', 50);
-    $peopleAmount = sanitizeInput($_POST['peopleAmount'] ?? 'Ikke spesifisert', 50);
-    
-    // Nutritional constraints - validate as numeric
-    $maxCaloriesPerMeal = validateNumericInput($_POST['maxCaloriesPerMeal'] ?? '', 0, 10000);
-    $maxCaloriesPerDay = validateNumericInput($_POST['maxCaloriesPerDay'] ?? '', 0, 50000);
-    $proteinGoal = validateNumericInput($_POST['proteinGoal'] ?? '', 0, 1000);
+    $data = $validationResult['data'];
     
     // Format allergies array (already sanitized and validated)
-    $allergiesString = !empty($allergies) ? implode(', ', $allergies) : 'Ingen allergier';
-    
-    // Additional validation for budget
-    if (empty($budget) || $budget === 'Ikke spesifisert') {
-        sendResponse(false, null, 'Budsjett er påkrevd og må spesifiseres');
-    }
+    $allergiesString = !empty($data['allergies']) ? implode(', ', $data['allergies']) : 'Ingen allergier';
     
     // Generate the formatted message in PHP with sanitized data
     $currentDate = date('Y.m.d');
     $userInput = 
         "
         Dato: {$currentDate}. 
-        Diettype: {$dietType}, 
+        Diettype: {$data['dietType']}, 
         Allergier: {$allergiesString}, 
-        Liker: {$likes}, 
-        Liker ikke: {$dislikes}, 
-        Budsjett: {$budget}, 
-        Ustyr: {$equipment}, 
-        Tid til matlaging: {$cookTime}, 
-        Antall måltider per dag: {$mealsPerDay},
-        Antall personer: {$peopleAmount},
-        Maksimalt kalorier per måltid: " . ($maxCaloriesPerMeal ?: 'Ikke spesifisert') . ",
-        Maksimalt kalorier per dag: " . ($maxCaloriesPerDay ?: 'Ikke spesifisert') . ",
-        Proteinmål per dag (gram): " . ($proteinGoal ?: 'Ikke spesifisert');
+        Liker: {$data['likes']}, 
+        Liker ikke: {$data['dislikes']}, 
+        Budsjett: {$data['budget']}, 
+        Ustyr: {$data['equipment']}, 
+        Tid til matlaging: {$data['cookTime']}, 
+        Antall måltider per dag: {$data['mealsPerDay']},
+        Antall personer: {$data['peopleAmount']},
+        Maksimalt kalorier per måltid: " . ($data['maxCaloriesPerMeal'] ?: 'Ikke spesifisert') . ",
+        Maksimalt kalorier per dag: " . ($data['maxCaloriesPerDay'] ?: 'Ikke spesifisert') . ",
+        Proteinmål per dag (gram): " . ($data['proteinGoal'] ?: 'Ikke spesifisert');
     
     // Initialize chat history if it doesn't exist
     if (!isset($_SESSION['chat_history'])) {
@@ -471,10 +293,7 @@ function handleSendMealPreferences($client, $parsedown, $instructionType) {
     }
     
     // Validate and sanitize instruction type to prevent path traversal
-    $allowedInstructionTypes = ['default', 'mealplanner', 'tutor', 'casual', 'debugger'];
-    if (!in_array($instructionType, $allowedInstructionTypes)) {
-        $instructionType = 'default';
-    }
+    $instructionType = validateInstructionType($instructionType);
     
     // Load system instructions
     $configFile = __DIR__ . "/config/instructions_{$instructionType}.txt";
