@@ -112,76 +112,101 @@ function generateMealPlanPDF($chatHistory) {
 <!DOCTYPE html>
 <html lang="no">
 <head>
-    <meta charset="UTF-8">
-    <title>Måltidsplan</title>
-    <style>
-        @page {
-            margin: 20mm;
-        }
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 11pt;
-            line-height: 1.6;
-            color: #333;
-        }
-        h1 {
-            color: #0078d4;
-            font-size: 18pt;
-            margin-top: 20pt;
-            margin-bottom: 10pt;
-            border-bottom: 2px solid #0078d4;
-            padding-bottom: 5pt;
-        }
-        h2 {
-            color: #0078d4;
-            font-size: 14pt;
-            margin-top: 15pt;
-            margin-bottom: 8pt;
-        }
-        h3 {
-            font-size: 12pt;
-            margin-top: 12pt;
-            margin-bottom: 6pt;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 10pt 0;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8pt;
-            text-align: left;
-        }
-        th {
-            background-color: #f0f0f0;
-            font-weight: bold;
-        }
-        code {
-            background-color: #f5f5f5;
-            padding: 2pt 4pt;
-            border-radius: 3pt;
-        }
-        pre {
-            background-color: #f5f5f5;
-            padding: 10pt;
-            border-radius: 5pt;
-            overflow-x: auto;
-        }
-        ul, ol {
-            margin: 8pt 0;
-            padding-left: 20pt;
-        }
-        li {
-            margin: 4pt 0;
-        }
-        p {
-            margin: 8pt 0;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Måltidsplan</title>
+<style>
+  @page { margin: 20mm; }
+  body {
+    font-family: 'DejaVu Sans', sans-serif;
+    font-size: 12px;
+    color: #333;
+    line-height: 1.6;
+    background-color: #fff;
+  }
+
+  h1 {
+    color: #2c3e50;
+    text-align: center;
+    font-size: 22px;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 5px;
+  }
+
+  h2 {
+    color: #0078d4;
+    font-size: 18px;
+    margin-top: 25px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 3px;
+  }
+
+  h3 {
+    color: #333;
+    font-size: 14px;
+    margin-top: 14px;
+    background: #f9f9f9;
+    padding: 5px 8px;
+    border-radius: 4px;
+  }
+
+  .meal {
+    margin-left: 10px;
+    margin-bottom: 4px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10pt 0;
+  }
+
+  th, td {
+    border: 1px solid #ccc;
+    padding: 6pt;
+    text-align: left;
+  }
+
+  th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+  }
+
+  ul, ol {
+    margin: 6pt 0 6pt 20pt;
+  }
+
+  li { margin: 3pt 0; }
+
+  .section {
+    margin-bottom: 15pt;
+  }
+
+  /* Recipe block styling */
+  .recipe {
+    background: #f9f9f9;
+    padding: 8pt 10pt;
+    border-left: 3px solid #0078d4;
+    margin-bottom: 10pt;
+    border-radius: 4pt;
+  }
+
+  .tips {
+    background: #eef6fb;
+    padding: 10pt;
+    border-radius: 6pt;
+    border-left: 3px solid #0078d4;
+  }
+
+  /* Page break for long sections */
+  .page-break {
+    page-break-before: always;
+  }
+</style>
 </head>
 <body>
-    {$html}
+  <h1>Måltidsplan</h1>
+  <div class="section">{$html}</div>
 </body>
 </html>
 HTML;
