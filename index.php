@@ -171,6 +171,13 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                 <!-- Chat area where conversation history is displayed -->
                 <div class="chat-area" id="chatArea">
                     <?php if (!empty($chatHistory)): ?>
+                        <!-- File export form (no JavaScript required) -->
+                        <div class="file-export-btn-wrapper">
+                            <form method="POST" action="chat_ajax.php" style="display: inline;">
+                                <input type="hidden" name="action" value="export_file">
+                                <button type="submit" class="file-export-btn">Eksporter måltidsplan</button>
+                            </form>
+                        </div>
                         <div class="messages-container">
                             <!-- Loop through each message in the chat history -->
                             <?php 

@@ -21,6 +21,10 @@ require_once 'includes/API_matvaretabellen.php';
 // Include validation functions
 require_once 'includes/validation.php';
 
+// Include file export functions
+require_once 'includes/mealplan_download.php';
+
+
 // Import necessary classes
 use Gemini\Enums\ModelVariation;
 use Gemini\GeminiHelper;
@@ -29,7 +33,7 @@ use Gemini\Data\Content;
 use Gemini\Enums\Role;
 use Dotenv\Dotenv;
 
-// Set content type to JSON for AJAX responses
+// Set content type to JSON for AJAX responses (will be overridden for file export)
 header('Content-Type: application/json');
 
 // Load environment variables
@@ -90,6 +94,9 @@ switch ($action) {
         break;
     case 'delete_session':
         handleDeleteSession();
+        break;
+    case 'export_file':
+        handleFileExport();
         break;
     default:
         sendResponse(false, null, 'Invalid action');
@@ -545,6 +552,31 @@ function handleDeleteSession() {
     unset($_SESSION['sessions'][$sessionId]);
     
     sendResponse(true, 'Session deleted successfully');
+}
+
+/**
+ * Handle exporting meal plan as PDF file
+ */
+function handleFileExport() {
+    // Get chat history from session
+    $chatHistory = $_SESSION['chat_history'] ?? [];
+    
+    // Check if chat history exists
+    if (empty($chatHistory)) {
+        sendResponse(false, null, 'Ingen samtalehistorikk å eksportere');
+    }
+    
+    try {
+        // Generate PDF (this will extract only the latest mealplan)
+        $pdf = generateMealPlanPDF($chatHistory);
+        
+        // Output the PDF (DomPDF handles headers automatically with stream)
+        $pdf->stream('Kunnskapsgryta - Måltdisplan.pdf', ['Attachment' => true]);
+        exit();
+    } catch (Exception $e) {
+        // If no mealplan was found or other error occurred
+        sendResponse(false, null, $e->getMessage());
+    }
 }
 
 ?>
