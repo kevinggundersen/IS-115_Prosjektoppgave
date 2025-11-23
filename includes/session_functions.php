@@ -7,22 +7,7 @@
  * displaying chat sessions.
  */
 
-/**
- * Initialize the sessions storage array
- * 
- * This function ensures that the $_SESSION['sessions'] array exists.
- * If it doesn't exist, the function creates an empty array.
- * This prevents errors when trying to access session data.
- * 
- * @return void This function doesn't return anything
- */
-function initializeSessions() {
-    // Check if the sessions array exists in the session data
-    if (!isset($_SESSION['sessions'])) {
-        // If it doesn't exist, create an empty array
-        $_SESSION['sessions'] = [];
-    }
-}
+
 
 /**
  * Create a title for a chat session based on the first user message

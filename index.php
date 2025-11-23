@@ -26,28 +26,7 @@ require_once 'vendor/autoload.php';
 require_once 'includes/session_functions.php';
 
 // Import necessary classes from the Google Gemini PHP client library
-use Gemini\Enums\ModelVariation;  // For model variations (not used at the moment)
-use Gemini\GeminiHelper;          // Helper functions for Gemini API
-use Gemini\Factory;               // Factory class to create Gemini client instances
-use Gemini\Data\Content;          // Content class for structuring messages
 use Gemini\Enums\Role;            // Enum for user/model roles in conversations
-use Dotenv\Dotenv;                // Library for loading environment variables from .env file
-
-/**
- * Environment Configuration
- * 
- * Load sensitive configuration data (like API keys) from a .env file
- * This keeps sensitive information out of the source code and version control
- */
-$dotenv = Dotenv::createImmutable(__DIR__);
-$dotenv->load();
-
-// Retrieve the Gemini API key from environment variables
-// This key is required to authenticate with Google's Gemini API
-$yourApiKey = $_ENV['GEMINI_API_KEY'];
-
-// Create a Gemini client instance using the factory pattern
-$client = (new Factory())->withApiKey($yourApiKey)->make();
 
 /**
  * Session Management
@@ -72,9 +51,9 @@ $parsedown = new \Parsedown();
  * Initialize variables that will be used throughout the application
  * These variables store the current state of the chat interface
  */
-$userInput = '';        // Stores the user's current message input (not currently used)
+
 $chatHistory = [];      // Array to hold the conversation history for display
-$lastResponse = '';     // Stores the AI's last response (not currently used)
+
 
 /**
  * Display Data Preparation
@@ -88,7 +67,7 @@ if (isset($_SESSION['chat_history'])) {
 
 
 // Initialize sessions
-initializeSessions();
+if (!isset($_SESSION['sessions'])) $_SESSION['sessions'] = [];
 
 // Initialize current session if it doesn't exist
 if (!isset($_SESSION['current_session_id']) && !empty($chatHistory)) {
@@ -171,7 +150,7 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                 <!-- Chat area where conversation history is displayed -->
                 <div class="chat-area" id="chatArea">
                     <?php if (!empty($chatHistory)): ?>
-                        <!-- File export form (no JavaScript required) -->
+                        <!-- File export form -->
                         <div class="file-export-btn-wrapper">
                             <form method="POST" action="chat_ajax.php" style="display: inline;">
                                 <input type="hidden" name="action" value="export_file">

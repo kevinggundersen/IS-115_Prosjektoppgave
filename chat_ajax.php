@@ -461,7 +461,7 @@ function handleGetChatHistory($parsedown) {
  */
 function handleCreateNewSession() {
     // Initialize sessions array if it doesn't exist
-    initializeSessions();
+    if (!isset($_SESSION['sessions'])) $_SESSION['sessions'] = [];
     
     // Save current session if it exists and has messages
     if (isset($_SESSION['current_session_id']) && isset($_SESSION['sessions'][$_SESSION['current_session_id']])) {

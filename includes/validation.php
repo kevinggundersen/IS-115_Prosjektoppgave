@@ -212,21 +212,6 @@ function validateInstructionType($instructionType) {
 }
 
 /**
- * Validate session ID format
- * 
- * @param string $sessionId The session ID to validate
- * @return bool True if valid, false otherwise
- */
-function validateSessionId($sessionId) {
-    if (empty($sessionId)) {
-        return false;
-    }
-    
-    // Session IDs should start with 'session_' and contain alphanumeric characters and dots
-    return preg_match('/^session_[a-zA-Z0-9.]+$/', $sessionId);
-}
-
-/**
  * Sanitize and validate form data for meal preferences
  * 
  * @param array $postData The POST data to validate
