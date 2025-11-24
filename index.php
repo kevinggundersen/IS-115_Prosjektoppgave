@@ -285,6 +285,12 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                     
                     <!-- Submit button -->
                     <button type="submit" id="sendPreferencesButton">Send inn preferanser</button>
+
+                    <!-- Skip button (no submit) -->
+                    <button type="button" id="skipFormButton">
+                        Hopp over for nå
+                    </button>
+
                 </form>
                 
                 <!-- Chat input form -->
@@ -293,6 +299,7 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                     <input type='text' id="messageInput" name="message" placeholder='Skriv meldingen din her...' required>
                     <!-- Submit button to send the message -->
                     <button type="submit" id="sendButton">Send</button>
+                    <button type="button" id="openPreferencesButton" class="btn-link" style="display:none;">Change meal preferences</button> 
                 </form>
                 
                 <!-- Loading indicator -->
