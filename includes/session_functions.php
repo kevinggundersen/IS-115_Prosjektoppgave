@@ -7,8 +7,6 @@
  * displaying chat sessions.
  */
 
-
-
 /**
  * Create a title for a chat session based on the first user message
  * 
