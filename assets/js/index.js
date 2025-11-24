@@ -120,7 +120,7 @@ function skipMealForm() {
   isSkipped = true;
   sessionStorage.setItem('mealFormSkipped', '1');
 
-  //  Remove or hide collapsible messages
+  // Remove or hide collapsible messages
   const collapsibleMessages = document.querySelectorAll('.collapsible-message');
   collapsibleMessages.forEach(msg => {
     msg.classList.remove('collapsible-message');
