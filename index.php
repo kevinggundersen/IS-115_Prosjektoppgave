@@ -291,7 +291,6 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                         Hopp over for nå
                     </button>
 
-
                 </form>
                 
                 <!-- Chat input form -->
