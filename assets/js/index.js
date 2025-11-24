@@ -110,11 +110,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    if (openPreferencesButton) {
-        openPreferencesButton.addEventListener('click', function () {
-            reopenMealForm();
-        });
-    }
 
     function skipMealForm() {
         isSkipped = true;
@@ -138,21 +133,6 @@ document.addEventListener('DOMContentLoaded', function () {
         addSystemNotice('Du hoppet over preferanseskjemaet. Du kan chatte nå.');
     }
 
-    function reopenMealForm() {
-        sessionStorage.removeItem('mealFormSkipped');
-
-        // Flip UI back to form mode
-        if (mealPreferencesForm) mealPreferencesForm.style.display = 'block';
-        if (chatContainer) chatContainer.classList.add('form-only');
-        if (chatForm) chatForm.style.display = 'none';
-        if (chatArea) chatArea.style.display = 'none';
-
-        // Hide “open prefs” button again
-        if (openPreferencesButton) openPreferencesButton.style.display = 'none';
-
-        // Rebuild collapsible for first user message
-        applyCollapsibleToFirstUserMessage();
-    }
 
     /**
      * Minimal system notice helper (no backend call)
