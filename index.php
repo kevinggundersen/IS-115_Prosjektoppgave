@@ -7,15 +7,14 @@
  * conversations with an AI assistant that can be configured with different
  * instruction sets (tutor, debugger, casual, or default).
  * 
- * Key Features:
+ * Main Features:
  * - Interactive chat interface with persistent conversation history
  * - Multiple AI personality modes via configuration files
  * - Markdown support for rich text responses
  * - Session-based chat history management
- * - Post-Redirect-Get pattern for form handling
  * - Syntax highlighting for code examples
  * 
- * @author IS-115 Student
+ * @author IS-115 Studentgruppe 2
  * @version 1.0
  */
 
@@ -27,29 +26,7 @@ require_once 'vendor/autoload.php';
 require_once 'includes/session_functions.php';
 
 // Import necessary classes from the Google Gemini PHP client library
-use Gemini\Enums\ModelVariation;  // For model variations (not used in current implementation)
-use Gemini\GeminiHelper;          // Helper functions for Gemini API
-use Gemini\Factory;               // Factory class to create Gemini client instances
-use Gemini\Data\Content;          // Content class for structuring messages
 use Gemini\Enums\Role;            // Enum for user/model roles in conversations
-use Dotenv\Dotenv;                // Library for loading environment variables from .env file
-
-/**
- * Environment Configuration
- * 
- * Load sensitive configuration data (like API keys) from a .env file
- * This keeps sensitive information out of the source code and version control
- */
-$dotenv = Dotenv::createImmutable(__DIR__);
-$dotenv->load();
-
-// Retrieve the Gemini API key from environment variables
-// This key is required to authenticate with Google's Gemini API
-$yourApiKey = $_ENV['GEMINI_API_KEY'];
-
-// Create a Gemini client instance using the factory pattern
-// The factory handles the complex setup of HTTP clients and authentication
-$client = (new Factory())->withApiKey($yourApiKey)->make();
 
 /**
  * Session Management
@@ -65,7 +42,6 @@ session_start();
  * 
  * Initialize Parsedown library to convert markdown text to HTML
  * This allows the AI to format responses with headers, code blocks, lists, etc.
- * The AI responses will be much more readable and professional-looking
  */
 $parsedown = new \Parsedown();
 
@@ -75,16 +51,9 @@ $parsedown = new \Parsedown();
  * Initialize variables that will be used throughout the application
  * These variables store the current state of the chat interface
  */
-$userInput = '';        // Stores the user's current message input
-$chatHistory = [];      // Array to hold the conversation history for display
-$lastResponse = '';     // Stores the AI's last response (not currently used)
 
-/**
- * AJAX Form Processing - No longer needed in main file
- * 
- * Form processing has been moved to chat_ajax.php to handle AJAX requests.
- * This allows for dynamic updates without page reloads.
- */
+$chatHistory = [];      // Array to hold the conversation history for display
+
 
 /**
  * Display Data Preparation
@@ -98,7 +67,9 @@ if (isset($_SESSION['chat_history'])) {
 
 
 // Initialize sessions
-initializeSessions();
+if (!isset($_SESSION['sessions'])) {
+    $_SESSION['sessions'] = [];
+}
 
 // Initialize current session if it doesn't exist
 if (!isset($_SESSION['current_session_id']) && !empty($chatHistory)) {
@@ -120,13 +91,9 @@ if (!isset($_SESSION['current_session_id']) && !empty($chatHistory)) {
 $allSessions = getAllSessions();
 $currentSessionId = $_SESSION['current_session_id'] ?? null;
 
-// Debug: Uncomment the line below to see session data for debugging
-// echo "<pre>Session data: "; print_r($_SESSION); echo "</pre>";
 
 /**
- * Clear Chat Functionality - Moved to AJAX
- * 
- * Clear chat functionality has been moved to chat_ajax.php to handle AJAX requests.
+ * Display the HTML for the chat application
  */
 ?>
 
@@ -135,13 +102,13 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
 
 <head>
     <title>Kunnskapsgryta</title>
-    <link rel="icon" type="image/png" href="assets/images/Kunnskapsgryta_Uten_bakgrunn_Ingen_Tekst.png">
+    <!-- Set the icon for the chat application -->
+    <link rel="icon" type="image/png" href="assets/images/Kunnskapsgryta_Uten_bakgrunn_Ingen_Tekst_zoom.png">
     
-    <!-- External CSS - Link to our custom stylesheet -->
+    <!-- Link to our custom stylesheet -->
     <link rel="stylesheet" href="assets/css/style.css">
     
     <!-- Prism.js for syntax highlighting -->
-    <!-- These libraries provide beautiful syntax highlighting for code blocks -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
@@ -150,12 +117,16 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
 <body>
     <!-- Main container for the entire application -->
     <div class="container">
+        <!-- Header for the chat application -->
         <div class="header">
+            <!-- Branding for the chat application -->
             <div class="branding" style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
-            <div class="branding-image" style="flex-shrink: 0;">
+                <!-- Image for the branding -->
+                <div class="branding-image" style="flex-shrink: 0;">
                 <img src="assets/images/Kunnskapsgryta_Uten_bakgrunn.png" alt="Kunnskapsgryta" height="75px" width="75px">
             </div>
-            <div class="branding-text" style="flex: 1;">
+                <!-- Text for the branding -->
+                <div class="branding-text" style="flex: 1;">
                 <h1 style="margin: 0; color: #333; font-size: 2em;">Kunnskapsgryta</h1>
             </div>
         </div>
@@ -181,20 +152,31 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                 <!-- Chat area where conversation history is displayed -->
                 <div class="chat-area" id="chatArea">
                     <?php if (!empty($chatHistory)): ?>
+                        <!-- File export form -->
+                        <div class="file-export-btn-wrapper">
+                            <form method="POST" action="chat_ajax.php" style="display: inline;">
+                                <input type="hidden" name="action" value="export_file">
+                                <button type="submit" class="file-export-btn">Eksporter måltidsplan</button>
+                            </form>
+                        </div>
                         <div class="messages-container">
                             <!-- Loop through each message in the chat history -->
                             <?php 
                             $firstUserMessageSkipped = false;
                             foreach ($chatHistory as $index => $message): 
-                                // Make the first user message collapsible
+                                // Make the first user message collapsible using javascript
                                 if ($message['role'] === 'user' && !$firstUserMessageSkipped) {
                                     $firstUserMessageSkipped = true;
                             ?>
+                                <!-- Collapsible message for the first user message -->
                                 <div class="message collapsible-message" role="<?php echo $message['role']; ?>">
+                                    <!-- Collapsible header for the first user message -->
                                     <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                        <!-- Collapsible icon -->
                                         <span class="collapsible-icon">▼</span>
                                         <span class="collapsible-title">Dine matpreferanser</span>
                                     </div>
+                                    <!-- Collapsible content for the first user message -->
                                     <div class="collapsible-content" style="display: none;">
                                         <?php echo nl2br(htmlspecialchars($message['content'])); ?>
                                     </div>
@@ -202,10 +184,11 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                             <?php 
                                 } else {
                             ?>
+                                <!-- Message for the chat history -->
                                  <div class="message" role="<?php echo $message['role']; ?>">
                                     <?php 
                                     if ($message['role'] === 'model') {
-                                        // Parse markdown for AI responses to enable rich formatting
+                                        // Parse markdown for AI responses to enable better formatting
                                         // This allows the AI to use headers, code blocks, lists, etc.
                                         echo $parsedown->text($message['content']);
                                     } else {
@@ -235,11 +218,12 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                         <option value="">Ingen spesielle krav</option>
                         <option value="vegetarisk">Vegetarisk</option>
                         <option value="vegansk">Vegansk</option>
-                        <option value="pescetarian">Pescetarianer</option>
+                        <option value="Pescetarian">Pescetarianer</option>
                         <option value="glutenfri">Glutenfri</option>
                         <option value="laktosefri">Laktosefri</option>
                         <option value="annet">Annet</option>
                     </select>
+                    <!-- Other diet type input -->
                     <input type="text" id="dietTypeOther" name="dietTypeOther" placeholder="Spesifiser kosthold..." style="display: none; margin-top: 5px;"><br>
                     <!-- Allergies -->
                     <label for="allergies">Allergier (velg alle som gjelder):</label>
@@ -253,6 +237,7 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                         <label><input type="checkbox" name="allergies[]" value="fisk"> Fisk</label>
                         <label><input type="checkbox" name="allergies[]" value="annet" id="allergiesAnnet"> Annet</label>
                     </div>
+                    <!-- Other allergies input -->
                     <input type="text" id="allergiesOther" name="allergiesOther" placeholder="Spesifiser allergier..." style="display: none; margin-top: 5px;">
                     
                     <!-- Likes -->
@@ -283,6 +268,21 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                     <label for="peopleAmount">Hvor mange lager du for?</label>
                     <input type="number" id="peopleAmount" name="peopleAmount" min="1" max="10" placeholder="F.eks. 3"><br>
                     
+                    <!-- Nutritional constraints -->
+                    <h4 style="margin-top: 20px; margin-bottom: 10px; color: #333;">Ernæringsmål (valgfritt)</h4>
+                    
+                    <!-- Max calories per meal -->
+                    <label for="maxCaloriesPerMeal">Maksimalt antall kalorier per måltid:</label>
+                    <input type="number" id="maxCaloriesPerMeal" name="maxCaloriesPerMeal" min="0" step="10" placeholder="F.eks. 500"><br>
+                    
+                    <!-- Max calories per day -->
+                    <label for="maxCaloriesPerDay">Maksimalt antall kalorier per dag:</label>
+                    <input type="number" id="maxCaloriesPerDay" name="maxCaloriesPerDay" min="0" step="50" placeholder="F.eks. 2000"><br>
+                    
+                    <!-- Protein goal -->
+                    <label for="proteinGoal">Proteinmål per dag (gram):</label>
+                    <input type="number" id="proteinGoal" name="proteinGoal" min="0" step="5" placeholder="F.eks. 80"><br>
+                    
                     <!-- Submit button -->
                     <button type="submit" id="sendPreferencesButton">Send inn preferanser</button>
 
@@ -312,7 +312,12 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
     </div>
 </body>
 
-<!-- JavaScript for AJAX functionality and syntax highlighting -->
+<!-- 
+JavaScript for AJAX functionality and syntax highlighting
+This file is used to handle the AJAX functionality for the chat application,
+including sending messages, receiving responses, and updating the UI
+without page reloads.
+-->
 <script src="assets/js/index.js"></script>
 
 </html>

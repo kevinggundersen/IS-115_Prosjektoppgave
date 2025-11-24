@@ -15,6 +15,16 @@ require_once 'vendor/autoload.php';
 // Include session management functions
 require_once 'includes/session_functions.php';
 
+// Include nutritional data service
+require_once 'includes/API_matvaretabellen.php';
+
+// Include validation functions
+require_once 'includes/validation.php';
+
+// Include file export functions
+require_once 'includes/mealplan_download.php';
+
+
 // Import necessary classes
 use Gemini\Enums\ModelVariation;
 use Gemini\GeminiHelper;
@@ -23,7 +33,7 @@ use Gemini\Data\Content;
 use Gemini\Enums\Role;
 use Dotenv\Dotenv;
 
-// Set content type to JSON for AJAX responses
+// Set content type to JSON for AJAX responses (will be overridden for file export)
 header('Content-Type: application/json');
 
 // Load environment variables
@@ -85,6 +95,9 @@ switch ($action) {
     case 'delete_session':
         handleDeleteSession();
         break;
+    case 'export_file':
+        handleFileExport();
+        break;
     default:
         sendResponse(false, null, 'Invalid action');
 }
@@ -93,12 +106,29 @@ switch ($action) {
  * Handle sending a message to the AI
  */
 function handleSendMessage($client, $parsedown, $instructionType) {
+    // Rate limiting - prevent spam
+    $currentTime = time();
+    $lastRequestTime = $_SESSION['last_request_time'] ?? 0;
+    $minInterval = 2; // Minimum 1 second between requests (shorter than meal preferences)
+    
+    if ($currentTime - $lastRequestTime < $minInterval) {
+        sendResponse(false, null, 'Vennligst vent en stund før du sender en ny forespørsel');
+    }
+    $_SESSION['last_request_time'] = $currentTime;
+    
     // Validate input
     if (!isset($_POST['message']) || empty(trim($_POST['message']))) {
-        sendResponse(false, null, 'Message is required');
+        sendResponse(false, null, 'Melding er påkrevd');
     }
     
-    $userInput = trim($_POST['message']);
+    // Sanitize and validate message input
+    $userInput = sanitizeInput($_POST['message'], 2000); // Allow longer messages for chat
+    
+    // Validate message content using the new validation function
+    $messageValidation = validateMessageContent($userInput, 2000);
+    if (!$messageValidation['valid']) {
+        sendResponse(false, null, $messageValidation['error']);
+    }
     
     // Initialize chat history if it doesn't exist
     if (!isset($_SESSION['chat_history'])) {
@@ -115,6 +145,8 @@ function handleSendMessage($client, $parsedown, $instructionType) {
         $history[] = Content::parse(part: $message['content'], role: $role);
     }
     
+    // Validate and sanitize instruction type to prevent path traversal
+    $instructionType = validateInstructionType($instructionType);
     
     // Load system instructions
     $configFile = __DIR__ . "/config/instructions_{$instructionType}.txt";
@@ -210,58 +242,47 @@ function handleSendMessage($client, $parsedown, $instructionType) {
 /**
  * Handle sending meal preferences to the AI
  */
+
 function handleSendMealPreferences($client, $parsedown, $instructionType) {
-    // Validate required fields
-    if (!isset($_POST['budget']) || empty(trim($_POST['budget']))) {
-        sendResponse(false, null, 'Budget is required');
+    // Rate limiting - prevent spam
+    $currentTime = time();
+    $lastRequestTime = $_SESSION['last_request_time'] ?? 0;
+    $minInterval = 2; // Minimum 2 seconds between requests
+    
+    if ($currentTime - $lastRequestTime < $minInterval) {
+        sendResponse(false, null, 'Vennligst vent en stund før du sender en ny forespørsel');
+    }
+    $_SESSION['last_request_time'] = $currentTime;
+    
+    // Validate and sanitize meal preferences data
+    $validationResult = validateMealPreferencesData($_POST);
+    
+    if (!empty($validationResult['errors'])) {
+        sendResponse(false, null, implode(', ', $validationResult['errors']));
     }
     
-    // Collect form data
-    $dietType = $_POST['dietType'] ?? 'Ingen spesielle krav';
-    $dietTypeOther = $_POST['dietTypeOther'] ?? '';
-    $allergies = $_POST['allergies'] ?? [];
-    $allergiesOther = $_POST['allergiesOther'] ?? '';
-    $likes = $_POST['likes'] ?? 'Ikke spesifisert';
-    $dislikes = $_POST['dislikes'] ?? 'Ikke spesifisert';
-    $budget = trim($_POST['budget']);
-    $equipment = $_POST['equipment'] ?? 'Ikke spesifisert';
-    $cookTime = $_POST['cookTime'] ?? 'Ikke spesifisert';
-    $mealsPerDay = $_POST['mealsPerDay'] ?? 'Ikke spesifisert';
-    $peopleAmount = $_POST['peopleAmount'] ?? 'Ikke spesifisert';
+    $data = $validationResult['data'];
     
-    // Handle custom diet type
-    if ($dietType === 'annet' && !empty($dietTypeOther)) {
-        $dietType = $dietTypeOther;
-    }
+    // Format allergies array (already sanitized and validated)
+    $allergiesString = !empty($data['allergies']) ? implode(', ', $data['allergies']) : 'Ingen allergier';
     
-    // Handle custom allergies
-    $allergiesList = $allergies;
-    if (in_array('annet', $allergies) && !empty($allergiesOther)) {
-        // Remove 'annet' from the array and add the custom allergy
-        $allergiesList = array_filter($allergies, function($allergy) {
-            return $allergy !== 'annet';
-        });
-        $allergiesList[] = $allergiesOther;
-    }
-    
-    // Format allergies array
-    $allergiesString = !empty($allergiesList) ? implode(', ', $allergiesList) : 'Ingen allergier';
-    
-    // Generate the formatted message in PHP
+    // Generate the formatted message in PHP with sanitized data
     $currentDate = date('Y.m.d');
     $userInput = 
         "
         Dato: {$currentDate}. 
-        Diettype: {$dietType}, 
+        Diettype: {$data['dietType']}, 
         Allergier: {$allergiesString}, 
-        Liker: {$likes}, 
-        Liker ikke: {$dislikes}, 
-        Budsjett: {$budget}, 
-        Ustyr: {$equipment}, 
-        Tid til matlaging: {$cookTime}, 
-        Antall måltider per dag: {$mealsPerDay},
-        Antall personer: {$peopleAmount},
-        ";
+        Liker: {$data['likes']}, 
+        Liker ikke: {$data['dislikes']}, 
+        Budsjett: {$data['budget']}, 
+        Ustyr: {$data['equipment']}, 
+        Tid til matlaging: {$data['cookTime']}, 
+        Antall måltider per dag: {$data['mealsPerDay']},
+        Antall personer: {$data['peopleAmount']},
+        Maksimalt kalorier per måltid: " . ($data['maxCaloriesPerMeal'] ?: 'Ikke spesifisert') . ",
+        Maksimalt kalorier per dag: " . ($data['maxCaloriesPerDay'] ?: 'Ikke spesifisert') . ",
+        Proteinmål per dag (gram): " . ($data['proteinGoal'] ?: 'Ikke spesifisert');
     
     // Initialize chat history if it doesn't exist
     if (!isset($_SESSION['chat_history'])) {
@@ -278,12 +299,59 @@ function handleSendMealPreferences($client, $parsedown, $instructionType) {
         $history[] = Content::parse(part: $message['content'], role: $role);
     }
     
+    // Validate and sanitize instruction type to prevent path traversal
+    $instructionType = validateInstructionType($instructionType);
+    
     // Load system instructions
     $configFile = __DIR__ . "/config/instructions_{$instructionType}.txt";
     if (!file_exists($configFile)) {
         $configFile = __DIR__ . "/config/instructions_default.txt";
     }
     $systemInstructions = file_get_contents($configFile);
+    
+    // Add nutritional data context for all users
+    $nutritionalService = new NutritionalDataService();
+    $allFoods = $nutritionalService->getAllFoods();
+    
+    if ($allFoods && isset($allFoods['foods'])) {
+        // Format all foods
+        $formattedFoods = [];
+        foreach ($allFoods['foods'] as $food) {
+            $formattedFoods[] = $nutritionalService->formatFoodData($food);
+        }
+        
+        $nutritionalContext = "\n\n**NUTRITIONAL DATABASE CONTEXT:**\n";
+        $nutritionalContext .= "You have access to the complete Norwegian Food Database with " . count($formattedFoods) . " foods.\n\n";
+        
+        // Create a comprehensive food database with ALL foods
+        $nutritionalContext .= "**COMPLETE FOOD DATABASE:**\n";
+        $nutritionalContext .= "Format: [Food Name] - [Calories] kcal, [Protein]g protein, [Fat]g fat, [Carbs]g carbs per 100g\n\n";
+        
+        // Include ALL foods, organized by official food groups
+        $categorizedFoods = $nutritionalService->categorizeFoodsByGroup($formattedFoods);
+        
+        foreach ($categorizedFoods as $category => $foods) {
+            if (!empty($foods)) {
+                $nutritionalContext .= "**{$category} (" . count($foods) . " foods):**\n";
+                foreach ($foods as $food) {
+                    $nutritionalContext .= "• {$food['name']} - {$food['nutrition']['calories']} kcal, {$food['nutrition']['protein']}g protein, {$food['nutrition']['fat']}g fat, {$food['nutrition']['carbs']}g carbs\n";
+                }
+                $nutritionalContext .= "\n";
+            }
+        }
+        
+        $nutritionalContext .= "**INSTRUCTIONS:**\n";
+        $nutritionalContext .= "- You have access to ALL " . count($formattedFoods) . " foods listed above\n";
+        $nutritionalContext .= "- Use the exact nutritional values provided for accurate calorie calculations\n";
+        $nutritionalContext .= "- Respect the user's dietary preferences and restrictions from their input\n";
+        $nutritionalContext .= "- Avoid suggesting foods that don't match their diet type or allergies\n";
+        $nutritionalContext .= "- Calculate total calories per meal by summing individual ingredient calories\n";
+        $nutritionalContext .= "- Provide nutritional breakdowns for each meal\n";
+        $nutritionalContext .= "- You can suggest any combination of suitable foods from the database\n";
+        $nutritionalContext .= "- Search through all categories to find the best food combinations\n";
+        
+        $systemInstructions .= $nutritionalContext;
+    }
     
     // Create chat session
     $chat = $client
@@ -393,7 +461,7 @@ function handleGetChatHistory($parsedown) {
  */
 function handleCreateNewSession() {
     // Initialize sessions array if it doesn't exist
-    initializeSessions();
+    if (!isset($_SESSION['sessions'])) $_SESSION['sessions'] = [];
     
     // Save current session if it exists and has messages
     if (isset($_SESSION['current_session_id']) && isset($_SESSION['sessions'][$_SESSION['current_session_id']])) {
@@ -484,6 +552,31 @@ function handleDeleteSession() {
     unset($_SESSION['sessions'][$sessionId]);
     
     sendResponse(true, 'Session deleted successfully');
+}
+
+/**
+ * Handle exporting meal plan as PDF file
+ */
+function handleFileExport() {
+    // Get chat history from session
+    $chatHistory = $_SESSION['chat_history'] ?? [];
+    
+    // Check if chat history exists
+    if (empty($chatHistory)) {
+        sendResponse(false, null, 'Ingen samtalehistorikk å eksportere');
+    }
+    
+    try {
+        // Generate PDF (this will extract only the latest mealplan)
+        $pdf = generateMealPlanPDF($chatHistory);
+        
+        // Output the PDF (DomPDF handles headers automatically with stream)
+        $pdf->stream('Kunnskapsgryta - Måltidsplan.pdf', ['Attachment' => true]);
+        exit();
+    } catch (Exception $e) {
+        // If no mealplan was found or other error occurred
+        sendResponse(false, null, $e->getMessage());
+    }
 }
 
 ?>

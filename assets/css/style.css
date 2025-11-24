@@ -1,17 +1,23 @@
 
 /**
- * IS-115 Prosjektoppgave - Chat Application Styles
+ * Chat Application Styles
  * 
  * This stylesheet defines the visual appearance of the AI chat application.
  * It creates a clean, modern interface with proper spacing, colors, and
  * responsive design elements.
  * 
- * Key Design Features:
- * - Clean, minimal design with good contrast
- * - Responsive layout that works on different screen sizes
- * - Distinct styling for user vs AI messages
- * - Syntax highlighting support for code blocks
- * - Scrollable chat area with proper overflow handling
+ * Main sections:
+ * - Header with branding
+ * - Sidebar with session list
+ * - Chat area with conversation history
+ * - Meal preferences form
+ * - Chat input form
+ * - Loading indicator
+ *
+ * Main colors:
+ * #d4a44c - orange
+ * #f7f1dc - light beige
+ * #6f8252 - dark green
  */
 
 /* ==========================================================================
@@ -32,6 +38,7 @@ body {
     overflow: hidden; /* Prevent any page-level scrolling */
 }
 
+/* Header styling */
 .header {
     /*background-color: #f5eedd;*/
     margin-bottom: 20px;
@@ -57,12 +64,12 @@ body {
 
 /* Branding section - aligns image to the left of text */
 .branding {
-    display: flex !important;          /* Use flexbox for horizontal layout */
-    flex-direction: row !important;    /* Ensure horizontal direction */
+    display: flex !important;          /* Flexbox for horizontal layout */
+    flex-direction: row !important;    /* Horizontal direction */
     align-items: center !important;    /* Vertically center align items */
     gap: 15px !important;             /* Space between image and text */
   /* Space below branding section */
-    width: 100% !important;           /* Ensure full width */
+    width: 100% !important;           /* Full width */
 }
 
 .branding-image {
@@ -72,7 +79,7 @@ body {
 
 .branding-text {
     flex: 1 !important;               /* Allow text to take remaining space */
-    display: inline-block !important; /* Ensure proper display */
+    display: inline-block !important;
 
 }
 
@@ -119,14 +126,6 @@ body {
    ========================================================================== */
 
 /* Sidebar styling */
-.sidebar {
-    width: 300px;
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 15px;
-    flex-shrink: 0;
-}
 
 /* Sidebar toggle button - hidden on desktop, visible on mobile/tablet */
 .sidebar-toggle {
@@ -251,6 +250,7 @@ body {
     flex-direction: column;
     min-width: 400px;
     min-height: 0; /* Allow shrinking */
+    position: relative; /* Enable absolute positioning for floating button */
 }
 
 /* Chat area - the main conversation display area */
@@ -266,6 +266,43 @@ body {
     overflow-y: auto;      /* Enable vertical scrolling when content overflows */
     scroll-behavior: smooth; /* Smooth scrolling animation */
     border-radius: 8px;    /* Rounded corners */
+    position: relative;    /* Enable absolute positioning for floating button */
+}
+
+/* File export button wrapper - handles right alignment */
+.file-export-btn-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
+    padding-top: 15px;
+}
+
+/* File export button - floating button in top right corner of chat area */
+.file-export-btn {
+    background-color: #5e5e5e;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.file-export-btn:hover {
+    background-color: #858585;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
+
+}
+
+.file-export-btn:active {
+
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 /* Base message styling - applies to all chat messages */
@@ -719,6 +756,17 @@ input[type="text"] {
         padding: 10px; /* Reduce chat area padding on mobile */
     }
     
+    /* Adjust floating button wrapper for mobile */
+    .file-export-btn-wrapper {
+        padding-top: 10px;
+    }
+    
+    /* Adjust floating button for mobile */
+    .file-export-btn {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+    
     /* Chat container responsive adjustments */
     .chat-container {
         min-width: 100%;
@@ -785,6 +833,17 @@ input[type="text"] {
         flex: 1; /* Take remaining space */
         min-height: 0; /* Allow shrinking */
         padding: 8px; /* Reduce padding further on very small screens */
+    }
+    
+    /* Adjust floating button wrapper for very small screens */
+    .file-export-btn-wrapper {
+        padding-top: 8px;
+    }
+    
+    /* Adjust floating button for very small screens */
+    .file-export-btn {
+        padding: 8px 14px;
+        font-size: 12px;
     }
     
     .message[role="user"] {
