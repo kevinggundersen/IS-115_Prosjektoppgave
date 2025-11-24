@@ -106,16 +106,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (skipFormButton) {
-  skipFormButton.addEventListener('click', function () {
-    skipMealForm();
-  });
-}
+    skipFormButton.addEventListener('click', function () {
+      skipMealForm();
+    });
+  }
 
-if (openPreferencesButton) {
-  openPreferencesButton.addEventListener('click', function () {
-    reopenMealForm();
-  });
-}
+    if (openPreferencesButton) {
+      openPreferencesButton.addEventListener('click', function () {
+        reopenMealForm();
+      });
+    }
 
 function skipMealForm() {
   isSkipped = true;
