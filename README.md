@@ -186,7 +186,7 @@ The project uses the following main dependencies:
 - **erusev/parsedown**: Markdown to HTML conversion
 - **guzzlehttp/guzzle**: HTTP client library
 - **nyholm/psr7**: PSR-7 HTTP message implementation
-- "dompdf/dompdf": HTML to PDF library
+- **dompdf/dompdf**: HTML to PDF library
 
 ### Cache Management
 
