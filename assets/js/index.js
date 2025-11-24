@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const openPreferencesButton = document.getElementById('openPreferencesButton');
 
 
+    let isSkipped = false;
+
     // Add click handlers to existing session items
     addSessionClickHandlers();
     
@@ -116,33 +118,42 @@ if (openPreferencesButton) {
 }
 
 function skipMealForm() {
-  // remember the choice for this tab/session
+  isSkipped = true;
   sessionStorage.setItem('mealFormSkipped', '1');
 
-  // flip UI to chat mode
+  // 🧹 Remove or hide collapsible messages
+  const collapsibleMessages = document.querySelectorAll('.collapsible-message');
+  collapsibleMessages.forEach(msg => {
+    msg.classList.remove('collapsible-message');
+    msg.innerHTML = msg.querySelector('.collapsible-content')?.innerHTML || msg.innerHTML;
+  });
+
+  // Flip UI to chat mode
   if (mealPreferencesForm) mealPreferencesForm.style.display = 'none';
   if (chatContainer) chatContainer.classList.remove('form-only');
   if (chatForm) chatForm.style.display = 'block';
   if (chatArea) chatArea.style.display = 'block';
 
-  // show the “open prefs” button so user can change mind
+  // Show “open prefs” button so user can change mind
   if (openPreferencesButton) openPreferencesButton.style.display = 'inline-block';
 
-  // optional: drop a tiny system notice in the chat
   addSystemNotice('You skipped the preferences form. You can chat now, or set preferences any time.');
 }
 
 function reopenMealForm() {
   sessionStorage.removeItem('mealFormSkipped');
 
-  // flip UI back to form mode
+  // Flip UI back to form mode
   if (mealPreferencesForm) mealPreferencesForm.style.display = 'block';
   if (chatContainer) chatContainer.classList.add('form-only');
   if (chatForm) chatForm.style.display = 'none';
   if (chatArea) chatArea.style.display = 'none';
 
-  // hide “open prefs” button again
+  // Hide “open prefs” button again
   if (openPreferencesButton) openPreferencesButton.style.display = 'none';
+
+  // Rebuild collapsible for first user message
+  applyCollapsibleToFirstUserMessage();
 }
 
 // minimal system notice helper (no backend call)
@@ -359,110 +370,123 @@ function addSystemNotice(text) {
     }
     
     /**
-     * Load a specific session
-     */
-    function loadSession(sessionId) {
-        console.log('Loading session:', sessionId);
-        setLoadingState(true);
-        
-        const formData = new FormData();
-        formData.append('action', 'load_session');
-        formData.append('session_id', sessionId);
-        
-        fetch('chat_ajax.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Session load response:', data);
-            
-            if (data.success) {
-                // Clear current chat and load session messages
-                chatArea.innerHTML = '';
-                
-                // Check if we have messages (note: messages are in data.data.messages)
-                const messages = data.data ? data.data.messages : data.messages;
-                if (messages && Array.isArray(messages) && messages.length > 0) {
-                    console.log('Loading', messages.length, 'messages');
-                    
-                    // Create messages container
-                    const messagesContainer = document.createElement('div');
-                    messagesContainer.className = 'messages-container';
-                    
-                    // Add all messages at once (make first user message collapsible)
-                    let firstUserMessageSkipped = false;
-                    messages.forEach((message, index) => {
-                        if (message && message.role && message.formatted_content) {
-                            // Make the first user message collapsible
-                            if (message.role === 'user' && !firstUserMessageSkipped) {
-                                firstUserMessageSkipped = true;
-                                
-                                const messageDiv = document.createElement('div');
-                                messageDiv.className = 'message collapsible-message';
-                                messageDiv.setAttribute('role', message.role);
-                                messageDiv.innerHTML = `
-                                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
-                                        <span class="collapsible-icon">▼</span>
-                                        <span class="collapsible-title">Dine matpreferanser</span>
-                                    </div>
-                                    <div class="collapsible-content" style="display: none;">
-                                        ${message.formatted_content}
-                                    </div>
-                                `;
-                                messagesContainer.appendChild(messageDiv);
-                                return;
-                            }
-                            
-                            const messageDiv = document.createElement('div');
-                            messageDiv.className = 'message';
-                            messageDiv.setAttribute('role', message.role);
-                            messageDiv.innerHTML = message.formatted_content;
-                            messagesContainer.appendChild(messageDiv);
-                        }
-                    });
-                    
-                    // Add the container to chat area
-                    chatArea.appendChild(messagesContainer);
-                    console.log('Messages loaded successfully');
+ * Load a specific session
+ */
+function loadSession(sessionId) {
+  console.log('Loading session:', sessionId);
+  const mealFormSkipped = sessionStorage.getItem('mealFormSkipped') === '1';
+  console.log('Skip flag detected:', mealFormSkipped);
+  setLoadingState(true);
+
+  const formData = new FormData();
+  formData.append('action', 'load_session');
+  formData.append('session_id', sessionId);
+
+  fetch('chat_ajax.php', {
+    method: 'POST',
+    body: formData
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Session load response:', data);
+
+      if (data.success) {
+        // Clear current chat and load session messages
+        chatArea.innerHTML = '';
+
+        // Check if we have messages (note: messages are in data.data.messages)
+        const messages = data.data ? data.data.messages : data.messages;
+        if (messages && Array.isArray(messages) && messages.length > 0) {
+          console.log('Loading', messages.length, 'messages');
+
+          // Create messages container
+          const messagesContainer = document.createElement('div');
+          messagesContainer.className = 'messages-container';
+
+          // Add all messages at once (make first user message collapsible)
+          let firstUserMessageSkipped = false;
+          messages.forEach((message, index) => {
+            if (message && message.role && message.formatted_content) {
+              // Make the first user message collapsible — only if not skipped
+              if (message.role === 'user' && !firstUserMessageSkipped) {
+                firstUserMessageSkipped = true;
+
+                const messageDiv = document.createElement('div');
+                messageDiv.setAttribute('role', message.role);
+
+                //  Use the skip flag read earlier
+                if (mealFormSkipped) {
+                    // Just show plain message if skipped
+                    messageDiv.className = 'message';
+                    messageDiv.innerHTML = message.formatted_content;
                 } else {
-                    console.log('No messages found, showing welcome message');
-                    chatArea.innerHTML = '<p>Start a conversation by entering a message below.</p>';
+                    // Build collapsible version
+                    messageDiv.className = 'message collapsible-message';
+                    messageDiv.innerHTML = `
+                        <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                            <span class="collapsible-icon">▼</span>
+                            <span class="collapsible-title">Dine matpreferanser</span>
+                        </div>
+                        <div class="collapsible-content" style="display: none;">
+                            ${message.formatted_content}
+                        </div>
+                    `;
                 }
-                
-                // Update active session in sidebar
-                updateActiveSession(sessionId);
-                
-                // Re-apply syntax highlighting
-                if (typeof Prism !== 'undefined') {
-                    Prism.highlightAll();
-                }
-                
-                // Scroll to bottom
-                setTimeout(() => {
-                    chatArea.scrollTop = chatArea.scrollHeight;
-                }, 100);
-                
-                // Update form visibility based on loaded messages
-                checkFormVisibility();
-            } else {
-                console.error('Session load failed:', data.error);
-                showError(data.error || 'Failed to load session');
+
+                messagesContainer.appendChild(messageDiv);
+                return; // skip to next message
             }
-        })
-        .catch(error => {
-            console.error('Error loading session:', error);
-            showError('Network error occurred: ' + error.message);
-        })
-        .finally(() => {
-            setLoadingState(false);
-        });
-    }
+
+              // For all other messages
+              const messageDiv = document.createElement('div');
+              messageDiv.className = 'message';
+              messageDiv.setAttribute('role', message.role);
+              messageDiv.innerHTML = message.formatted_content;
+              messagesContainer.appendChild(messageDiv);
+            }
+          });
+
+          // Add the container to chat area
+          chatArea.appendChild(messagesContainer);
+          console.log('Messages loaded successfully');
+        } else {
+          console.log('No messages found, showing welcome message');
+          chatArea.innerHTML = '<p>Start a conversation by entering a message below.</p>';
+        }
+
+        // Update active session in sidebar
+        updateActiveSession(sessionId);
+
+        // Re-apply syntax highlighting
+        if (typeof Prism !== 'undefined') {
+          Prism.highlightAll();
+        }
+
+        // Scroll to bottom
+        setTimeout(() => {
+          chatArea.scrollTop = chatArea.scrollHeight;
+        }, 100);
+
+        // Update form visibility based on loaded messages
+        checkFormVisibility();
+      } else {
+        console.error('Session load failed:', data.error);
+        showError(data.error || 'Failed to load session');
+      }
+    })
+    .catch(error => {
+      console.error('Error loading session:', error);
+      showError('Network error occurred: ' + error.message);
+    })
+    .finally(() => {
+      setLoadingState(false);
+    });
+}
     
     /**
      * Delete a session (global function for onclick)
@@ -544,15 +568,19 @@ function addSystemNotice(text) {
             messagesContainer.appendChild(messageDiv);
         });
         
-        // Apply collapsible functionality to first user message if needed
-        applyCollapsibleToFirstUserMessage();
-        
-        // Scroll to the last user message
-        scrollToLastUserMessage();
-        
-        // Re-apply syntax highlighting
-        if (typeof Prism !== 'undefined') {
-            Prism.highlightAll();
+        const skipped = sessionStorage.getItem('mealFormSkipped') === '1';
+            if (!skipped) {
+                
+            // Apply collapsible functionality to first user message if needed
+            applyCollapsibleToFirstUserMessage();
+
+            // Scroll to last user message
+            scrollToLastUserMessage();
+
+            // Re-apply syntax highlighting
+            if (typeof Prism !== 'undefined') {
+                Prism.highlightAll();
+            }
         }
         
         // Update form visibility after adding messages
@@ -563,6 +591,8 @@ function addSystemNotice(text) {
      * Apply collapsible functionality to the first user message (meal preferences)
      */
     function applyCollapsibleToFirstUserMessage() {
+
+
         const messagesContainer = chatArea.querySelector('.messages-container');
         if (!messagesContainer) return;
         
@@ -677,7 +707,7 @@ function addSystemNotice(text) {
         welcomeMessage &&
         welcomeMessage.textContent.includes('Start planleggingen ved å skrive inn dine preferanser nedenfor.');
 
-        // NEW: respect "skipped" (sessionStorage flag)
+        // respect "skipped" (sessionStorage flag)
         const skipped = sessionStorage.getItem('mealFormSkipped') === '1';
 
         if (hasConversationMessages || skipped) {
