@@ -115,14 +115,14 @@ function validateDietType($dietType, $dietTypeOther) {
  */
 function validateAllergies($allergies, $allergiesOther) {
     $allowedAllergies = [
-        'Nøtter',
-        'Melk',
-        'Egg',
-        'Fisk',
-        'Skalldyr',
-        'Soya',
-        'Gluten',
-        'Sesam',
+        'nøtter',
+        'melk',
+        'egg',
+        'fisk',
+        'skalldyr',
+        'soya',
+        'gluten',
+        'sesam',
         'annet'
     ];
     
