@@ -67,7 +67,9 @@ if (isset($_SESSION['chat_history'])) {
 
 
 // Initialize sessions
-if (!isset($_SESSION['sessions'])) $_SESSION['sessions'] = [];
+if (!isset($_SESSION['sessions'])) {
+    $_SESSION['sessions'] = [];
+}
 
 // Initialize current session if it doesn't exist
 if (!isset($_SESSION['current_session_id']) && !empty($chatHistory)) {
