@@ -1,0 +1,821 @@
+
+/**
+ * Chat Application Styles
+ * 
+ * This stylesheet defines the visual appearance of the AI chat application.
+ * It creates a clean, modern interface with proper spacing, colors, and
+ * responsive design elements.
+ * 
+ * Main sections:
+ * - Header with branding
+ * - Sidebar with session list
+ * - Chat area with conversation history
+ * - Meal preferences form
+ * - Chat input form
+ * - Loading indicator
+ *
+ * Main colors:
+ * #d4a44c - orange
+ * #f7f1dc - light beige
+ * #6f8252 - dark green
+ */
+
+/* ==========================================================================
+   RESET & BASE STYLES
+   ========================================================================== */
+
+/* Ensure all elements use border-box sizing */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+/* Global body styling - sets basic page layout and spacing */
+body {
+    margin: 0;     /* Remove margin to prevent scroll */
+    padding: 20px; /* Use padding instead of margin */
+    box-sizing: border-box; /* Include padding and border in width calculation */
+    height: 100vh; /* Use full viewport height */
+    overflow: hidden; /* Prevent any page-level scrolling */
+}
+
+/* Header styling */
+.header {
+    /*background-color: #f5eedd;*/
+    margin-bottom: 20px;
+    margin-top: -20px;
+    margin-left: -20px;
+    margin-right: -20px;
+}
+
+/* ==========================================================================
+   LAYOUT CONTAINERS
+   ========================================================================== */
+
+/* Main container - centers content and sets maximum width for readability */
+.container {
+    max-width: 1400px;  /* Fixed width for better readability on large screens */
+    margin: 0 auto;     /* Center the container horizontally */
+    padding: 0;         /* Remove padding since body has padding */
+    height: 100%;       /* Use full height of body (which accounts for padding) */
+    display: flex;      /* Use flexbox for proper height control */
+    flex-direction: column; /* Stack elements vertically */
+
+}
+
+/* Branding section - aligns image to the left of text */
+.branding {
+    display: flex !important;          /* Flexbox for horizontal layout */
+    flex-direction: row !important;    /* Horizontal direction */
+    align-items: center !important;    /* Vertically center align items */
+    gap: 15px !important;             /* Space between image and text */
+  /* Space below branding section */
+    width: 100% !important;           /* Full width */
+}
+
+.branding-image {
+    flex-shrink: 0 !important;        /* Prevent image from shrinking */
+    display: inline-block !important; /* Ensure proper display */
+}
+
+.branding-text {
+    flex: 1 !important;               /* Allow text to take remaining space */
+    display: inline-block !important;
+
+}
+
+.branding-text h1 {
+    margin: 0 !important;             /* Remove default margin from h1 */
+    color: #333 !important;           /* Dark text color */
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+/* Main layout container for sidebar and chat area */
+.main-layout {
+    display: flex;
+    gap: 20px;
+    flex: 1; /* Take remaining space after header and toggle button */
+    min-height: 0; /* Allow flex children to shrink */
+}
+
+/* ==========================================================================
+   SIDEBAR COMPONENTS
+   ========================================================================== */
+
+/* Sidebar styling */
+.sidebar {
+    width: 300px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    flex-shrink: 0;
+}
+
+/* Main layout container for sidebar and chat area */
+.main-layout {
+    display: flex;
+    gap: 20px;
+    flex: 1; /* Take remaining space after header and toggle button */
+    min-height: 0; /* Allow flex children to shrink */
+}
+
+/* ==========================================================================
+   SIDEBAR COMPONENTS
+   ========================================================================== */
+
+/* Sidebar styling */
+
+/* Sidebar toggle button - hidden on desktop, visible on mobile/tablet */
+.sidebar-toggle {
+    display: none;
+    background-color: #5e5e5e;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.sidebar-toggle:hover {
+    background-color: #858585;
+}
+
+.sidebar-header {
+    margin-bottom: 15px;
+}
+
+.new-chat-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #5e5e5e;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.new-chat-btn:hover {
+    background-color: #858585;
+}
+
+.session-list {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.session-item {
+    padding: 12px;
+    margin-bottom: 8px;
+    background-color: white;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.session-item:hover {
+    background-color: #f8f9fa;
+    border-color: #474747;
+}
+
+.session-item.active {
+    background-color: #eeeeee;
+    border-color: #3b3b3b;
+}
+
+.session-title {
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: #333;
+    word-wrap: break-word;
+}
+
+.session-date {
+    font-size: 12px;
+    color: #666;
+}
+
+.session-delete {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 50%;
+    color: #6c757d;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    opacity: 0;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.session-item:hover .session-delete {
+    opacity: 1;
+}
+
+.session-delete:hover {
+    background: #dc3545;
+    color: white;
+    border-color: #dc3545;
+    transform: scale(1.1);
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);
+}
+
+/* ==========================================================================
+   CHAT AREA COMPONENTS
+   ========================================================================== */
+
+/* Chat container */
+.chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 400px;
+    min-height: 0; /* Allow shrinking */
+    position: relative; /* Enable absolute positioning for floating button */
+}
+
+/* Chat area - the main conversation display area */
+.chat-area {
+    flex: 1;               /* Take remaining space in flex container */
+    min-height: 0;         /* Allow shrinking */
+    border: 1px solid #ccc; /* Subtle border to define the chat area */
+    padding: 15px;         /* Internal spacing for content */
+    margin-bottom: 20px;   /* External spacing below */
+    background-color: #f9f9f9; /* Light gray background for contrast */
+    line-height: 1.4;      /* Improved line spacing for readability */
+    font-size: 1.0rem;     /* Standard font size */
+    overflow-y: auto;      /* Enable vertical scrolling when content overflows */
+    scroll-behavior: smooth; /* Smooth scrolling animation */
+    border-radius: 8px;    /* Rounded corners */
+    position: relative;    /* Enable absolute positioning for floating button */
+}
+
+/* File export button wrapper - handles right alignment */
+.file-export-btn-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
+    padding-top: 15px;
+}
+
+/* File export button - floating button in top right corner of chat area */
+.file-export-btn {
+    background-color: #5e5e5e;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.file-export-btn:hover {
+    background-color: #858585;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
+
+}
+
+.file-export-btn:active {
+
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* Base message styling - applies to all chat messages */
+.message {
+    margin: 20px 0;        /* Vertical spacing between messages */
+    padding: 10px;         /* Internal padding for message content */
+    border-radius: 10px;   /* Rounded corners for modern appearance */
+}
+
+/* User message styling - messages sent by the user */
+.message[role="user"] {
+    background-color: rgb(231, 231, 231); /* Light gray background */
+    text-align: left;      /* Left-align text content */
+    margin-left: 20%;      /* Responsive indent from left to distinguish from AI messages */
+}
+
+/* AI/Model message styling - messages from the AI assistant */
+.message[role="model"] {
+    text-align: left;      /* Left-align text content */
+    /* No special background - uses default white/transparent */
+}
+
+/* Chat form styling */
+#chatForm {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Text input field styling */
+input[type="text"] {
+    width: 88%;            /* Take up 88% of available width */
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    margin-right: 10px;
+    box-sizing: border-box; /* Include padding and border in width calculation */
+}
+
+/* Button styling - applies to all buttons (Send, Clear Chat) */
+#sendButton {
+    background-color: #f8f9fa;
+    border: 1px solid #4d4d4d;
+    border-radius: 8px;
+    padding: 15px;
+    flex-shrink: 0;
+}
+
+#sendButton:hover {
+    background-color: #e4e4e4;
+    border: 1px solid #4d4d4d;
+    border-radius: 8px;
+    padding: 15px;
+    flex-shrink: 0;
+}
+
+/* ==========================================================================
+   MARKDOWN CONTENT STYLING
+   ========================================================================== */
+
+/**
+ * These styles handle the formatting of markdown content that comes from
+ * the AI responses. The Parsedown library converts markdown to HTML,
+ * and these styles make that HTML look good in our chat interface.
+ */
+
+/* Heading styles - different sizes for different heading levels */
+.message h1, .message h2, .message h3, .message h4, .message h5, .message h6 {
+    margin: 15px 0 10px 0;  /* Consistent spacing above and below headings */
+    font-weight: bold;       /* Make headings stand out */
+}
+
+/* Specific font sizes for each heading level (h1 largest, h6 smallest) */
+.message h1 { font-size: 1.5em; }   /* Largest heading */
+.message h2 { font-size: 1.3em; }   /* Second largest */
+.message h3 { font-size: 1.2em; }   /* Medium heading */
+.message h4 { font-size: 1.1em; }   /* Smaller heading */
+.message h5 { font-size: 1.05em; }  /* Even smaller */
+.message h6 { font-size: 1em; }     /* Smallest heading */
+
+/* Paragraph styling - proper spacing between paragraphs */
+.message p {
+    margin: 10px 0;  /* Consistent spacing above and below paragraphs */
+}
+
+/* Inline code styling - for code snippets within text */
+.message code {
+    background-color: #f4f4f4;  /* Light gray background */
+    padding: 2px 4px;           /* Small padding around code */
+    border-radius: 3px;         /* Slightly rounded corners */
+    font-family: 'Courier New', monospace;  /* Monospace font for code */
+    font-size: 0.9em;           /* Slightly smaller font size */
+}
+
+/* Code block styling - for multi-line code examples */
+.message pre {
+    background-color: #2d3748;  /* Dark background for code blocks */
+    padding: 15px;              /* Generous padding around code */
+    border-radius: 8px;         /* Rounded corners */
+    overflow-x: auto;           /* Horizontal scroll for long lines */
+    margin: 15px 0;             /* Spacing above and below */
+    border: 1px solid #4a5568;  /* Subtle border */
+}
+
+/* Code within code blocks - overrides inline code styling */
+.message pre code {
+    background-color: transparent;  /* No background (uses pre background) */
+    padding: 0;                     /* No padding (uses pre padding) */
+    color: #e2e8f0;                /* Light text color for dark background */
+    font-family: 'Fira Code', 'Courier New', monospace;  /* Modern monospace font */
+    font-size: 0.9em;              /* Consistent font size */
+    line-height: 1.5;              /* Better line spacing for readability */
+}
+
+/* Prism.js syntax highlighting theme overrides */
+/* These ensure Prism.js syntax highlighting integrates well with our design */
+.message pre[class*="language-"] {
+    background-color: #2d3748;  /* Dark background for syntax highlighting */
+    border: 1px solid #4a5568;  /* Consistent border */
+}
+
+.message code[class*="language-"] {
+    background-color: transparent;  /* No background (uses pre background) */
+    color: #e2e8f0;                /* Light text color */
+}
+
+/* List styling - for ordered and unordered lists */
+.message ul, .message ol {
+    margin: 10px 0;      /* Spacing above and below lists */
+    padding-left: 20px;  /* Indent list items */
+}
+
+.message li {
+    margin: 5px 0;       /* Spacing between list items */
+}
+
+/* Blockquote styling - for quoted text */
+.message blockquote {
+    border-left: 4px solid #ddd;  /* Left border to indicate quote */
+    margin: 10px 0;               /* Spacing above and below */
+    padding-left: 15px;           /* Indent quoted text */
+    color: #666;                  /* Slightly muted text color */
+}
+
+/* Table styling - for data tables */
+.message table {
+    border-collapse: collapse;  /* Merge table borders */
+    width: 100%;               /* Full width tables */
+    margin: 10px 0;            /* Spacing above and below */
+}
+
+.message th, .message td {
+    border: 1px solid #ddd;    /* Border around each cell */
+    padding: 8px;              /* Padding inside cells */
+    text-align: left;          /* Left-align text in cells */
+}
+
+.message th {
+    background-color: #f2f2f2;  /* Light background for headers */
+    font-weight: bold;          /* Bold text for headers */
+}
+
+/* Text formatting - bold and italic */
+.message strong {
+    font-weight: bold;  /* Bold text */
+}
+
+.message em {
+    font-style: italic;  /* Italic text */
+}
+
+/* Link styling - for clickable links */
+.message a {
+    color: #0066cc;           /* Blue color for links */
+    text-decoration: underline;  /* Underline to indicate clickability */
+}
+
+.message a:hover {
+    color: #004499;  /* Darker blue on hover */
+}
+
+/* ==========================================================================
+   MEAL PLANNER FORM COMPONENTS
+   ========================================================================== */
+
+#mealPreferencesForm {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    margin-bottom: 20px;
+    height: 100%;
+    max-height: none;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+/* Ensure the form content area is scrollable */
+#mealPreferencesForm > *:not(button) {
+    flex-shrink: 0;
+}
+
+#mealPreferencesForm button[type="submit"] {
+    margin-top: auto;
+    flex-shrink: 0;
+}
+
+/* Ensure chat container allows form to expand when form is full height */
+.chat-container:has(#mealPreferencesForm) {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Alternative selector for browsers that don't support :has() */
+.chat-container #mealPreferencesForm {
+    flex: 1;
+}
+
+/* When chat area is hidden, make chat container expand to full height */
+.chat-container.form-only {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+#mealPreferencesForm h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.2em;
+}
+
+#mealPreferencesForm label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #333;
+}
+
+#mealPreferencesForm select,
+#mealPreferencesForm input[type="text"],
+#mealPreferencesForm input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    background-color: white;
+    box-sizing: border-box;
+}
+
+#mealPreferencesForm #allergies {
+    margin-bottom: 15px;
+}
+
+#mealPreferencesForm #allergies label {
+    display: inline-block;
+    margin-right: 15px;
+    margin-bottom: 8px;
+    font-weight: normal;
+}
+
+#mealPreferencesForm #allergies input[type="checkbox"] {
+    width: auto;
+    margin-right: 5px;
+    margin-bottom: 0;
+}
+
+#mealPreferencesForm button[type="submit"] {
+    background-color: #5e5e5e;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    width: 100%;
+}
+
+#mealPreferencesForm button[type="submit"]:hover {
+    background-color: #858585;
+}
+
+/* ==========================================================================
+   COLLAPSIBLE MESSAGE COMPONENTS
+   ========================================================================== */
+
+/* Collapsible message styling */
+.collapsible-message {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    margin: 15px 0;
+}
+
+.collapsible-header {
+    padding: 12px 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    background-color: #e9ecef;
+    border-radius: 8px 8px 0 0;
+    transition: background-color 0.2s ease;
+    user-select: none;
+}
+
+.collapsible-header:hover {
+    background-color: #dee2e6;
+}
+
+.collapsible-icon {
+    margin-right: 8px;
+    font-size: 12px;
+    transition: transform 0.2s ease;
+    color: #6c757d;
+}
+
+.collapsible-title {
+    font-weight: 500;
+    color: #495057;
+    font-size: 14px;
+}
+
+.collapsible-content {
+    padding: 15px;
+    background-color: #ffffff;
+    border-radius: 0 0 8px 8px;
+    border-top: 1px solid #e0e0e0;
+    line-height: 1.5;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+
+/* Tablet layout - implement toggleable sidebar */
+@media (max-width: 1024px) {
+    .sidebar-toggle {
+        display: block; /* Show toggle button on tablets */
+    }
+    
+    .main-layout {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .sidebar {
+        width: 100%;
+        order: 1; /* Move sidebar above chat when shown */
+        display: none; /* Hidden by default */
+        max-height: 40vh; /* Limit sidebar height */
+        overflow-y: auto; /* Allow scrolling within sidebar */
+    }
+    
+    .sidebar.show {
+        display: block; /* Show when toggled */
+    }
+    
+    .chat-container {
+        order: 2; /* Chat area below sidebar when sidebar is shown */
+        min-width: unset;
+        flex: 1; /* Take remaining space */
+    }
+    
+    .chat-area {
+        flex: 1; /* Take remaining space */
+        min-height: 0; /* Allow shrinking */
+    }
+    
+    /* Adjust user message margin for tablets */
+    .message[role="user"] {
+        margin-left: 15%; /* Reduce margin on tablets */
+    }
+}
+
+/* Mobile layout - implement toggleable sidebar */
+@media (max-width: 768px) {
+    body {
+        padding: 10px; /* Reduce body padding on mobile */
+    }
+    
+    .sidebar-toggle {
+        display: block; /* Show toggle button on mobile */
+        width: 100%; /* Full width on mobile */
+        margin-bottom: 10px;
+    }
+    
+    .main-layout {
+        gap: 10px; /* Reduce gap on mobile */
+        /* Remove fixed height, let flex handle it */
+    }
+    
+    .sidebar {
+        width: 100%;
+        padding: 10px; /* Reduce sidebar padding on mobile */
+        display: none; /* Hidden by default */
+        max-height: 35vh; /* Limit sidebar height on mobile */
+        overflow-y: auto; /* Allow scrolling within sidebar */
+        order: 1; /* Ensure sidebar appears above chat on mobile */
+    }
+    
+    .sidebar.show {
+        display: block; /* Show when toggled */
+    }
+    
+    .chat-area {
+        flex: 1; /* Take remaining space */
+        min-height: 0; /* Allow shrinking */
+        padding: 10px; /* Reduce chat area padding on mobile */
+    }
+    
+    /* Adjust floating button wrapper for mobile */
+    .file-export-btn-wrapper {
+        padding-top: 10px;
+    }
+    
+    /* Adjust floating button for mobile */
+    .file-export-btn {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+    
+    /* Chat container responsive adjustments */
+    .chat-container {
+        min-width: 100%;
+    }
+    
+    /* Improve form layout on mobile */
+    #chatForm {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    input[type="text"] {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 0;
+    }
+    
+    #sendButton {
+        width: 20%;
+    }
+    
+    /* Adjust user message margin for mobile */
+    .message[role="user"] {
+        margin-left: 10%; /* Further reduce margin on mobile */
+    }
+    
+    /* Responsive adjustments for collapsible messages */
+    .collapsible-header {
+        padding: 10px 12px;
+    }
+    
+    .collapsible-content {
+        padding: 12px;
+    }
+    
+    .collapsible-title {
+        font-size: 13px;
+    }
+}
+
+/* Extra small screens (phones in portrait) */
+@media (max-width: 480px) {
+    body {
+        padding: 5px; /* Further reduce padding on very small screens */
+    }
+    
+    .sidebar-toggle {
+        padding: 8px 12px; /* Smaller padding on very small screens */
+        font-size: 12px;
+    }
+    
+    .main-layout {
+        gap: 5px; /* Minimal gap on very small screens */
+        /* Remove fixed height, let flex handle it */
+    }
+    
+    .sidebar {
+        max-height: 30vh; /* Smaller sidebar on very small screens */
+        padding: 8px; /* Reduce padding further on very small screens */
+        order: 1; /* Ensure sidebar appears above chat on very small screens */
+    }
+    
+    .chat-area {
+        flex: 1; /* Take remaining space */
+        min-height: 0; /* Allow shrinking */
+        padding: 8px; /* Reduce padding further on very small screens */
+    }
+    
+    /* Adjust floating button wrapper for very small screens */
+    .file-export-btn-wrapper {
+        padding-top: 8px;
+    }
+    
+    /* Adjust floating button for very small screens */
+    .file-export-btn {
+        padding: 8px 14px;
+        font-size: 12px;
+    }
+    
+    .message[role="user"] {
+        margin-left: 5%; /* Minimal margin on very small screens */
+    }
+    
+    .message {
+        margin: 10px 0; /* Reduce message spacing on small screens */
+        padding: 8px; /* Reduce message padding on small screens */
+    }
+}
