@@ -422,7 +422,7 @@ function loadSession(sessionId) {
                 const messageDiv = document.createElement('div');
                 messageDiv.setAttribute('role', message.role);
 
-                //  Use the skip flag read earlier
+                // Use the skip flag read earlier
                 if (mealFormSkipped) {
                     // Just show plain message if skipped
                     messageDiv.className = 'message';
