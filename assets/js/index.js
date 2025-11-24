@@ -624,7 +624,7 @@ document.addEventListener('DOMContentLoaded', function() {
             chatArea.style.display = 'block';
         }
         // If there's only a welcome message or no messages, show the meal form and hide chat form
-        else if (hasWelcomeMessage || (!hasConversationMessages && !hasWelcomeMessage)) {
+        else {
             mealPreferencesForm.style.display = 'block';
             if (chatContainer) {
                 chatContainer.classList.add('form-only');

@@ -67,7 +67,9 @@ if (isset($_SESSION['chat_history'])) {
 
 
 // Initialize sessions
-if (!isset($_SESSION['sessions'])) $_SESSION['sessions'] = [];
+if (!isset($_SESSION['sessions'])) {
+    $_SESSION['sessions'] = [];
+}
 
 // Initialize current session if it doesn't exist
 if (!isset($_SESSION['current_session_id']) && !empty($chatHistory)) {
@@ -216,7 +218,7 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                         <option value="">Ingen spesielle krav</option>
                         <option value="vegetarisk">Vegetarisk</option>
                         <option value="vegansk">Vegansk</option>
-                        <option value="pescetarian">Pescetarianer</option>
+                        <option value="Pescetarian">Pescetarianer</option>
                         <option value="glutenfri">Glutenfri</option>
                         <option value="laktosefri">Laktosefri</option>
                         <option value="annet">Annet</option>

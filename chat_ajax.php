@@ -571,7 +571,7 @@ function handleFileExport() {
         $pdf = generateMealPlanPDF($chatHistory);
         
         // Output the PDF (DomPDF handles headers automatically with stream)
-        $pdf->stream('Kunnskapsgryta - Måltdisplan.pdf', ['Attachment' => true]);
+        $pdf->stream('Kunnskapsgryta - Måltidsplan.pdf', ['Attachment' => true]);
         exit();
     } catch (Exception $e) {
         // If no mealplan was found or other error occurred
