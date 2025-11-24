@@ -172,7 +172,9 @@ function addSystemNotice(text) {
   const div = document.createElement('div');
   div.className = 'message';
   div.setAttribute('role', 'system');
-  div.innerHTML = `<em>${text}</em>`;
+  const em = document.createElement('em');
+  em.textContent = text;
+  div.appendChild(em);
   messagesContainer.appendChild(div);
 
   chatArea.scrollTo({ top: chatArea.scrollHeight, behavior: 'smooth' });
