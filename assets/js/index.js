@@ -595,7 +595,6 @@ function loadSession(sessionId) {
      */
     function applyCollapsibleToFirstUserMessage() {
 
-
         const messagesContainer = chatArea.querySelector('.messages-container');
         if (!messagesContainer) return;
         
