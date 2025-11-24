@@ -701,7 +701,6 @@ function loadSession(sessionId) {
      */
     function checkFormVisibility() {
         if (!mealPreferencesForm) return;
-
         const messagesContainer = chatArea.querySelector('.messages-container');
         const welcomeMessage = chatArea.querySelector('p');
         const hasConversationMessages = messagesContainer && messagesContainer.children.length > 0;
