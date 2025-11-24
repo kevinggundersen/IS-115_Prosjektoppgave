@@ -719,7 +719,7 @@ function loadSession(sessionId) {
         if (chatForm) chatForm.style.display = 'block';
         chatArea.style.display = 'block';
         if (openPreferencesButton) openPreferencesButton.style.display = 'inline-block';
-        } else if (hasWelcomeMessage || (!hasConversationMessages && !hasWelcomeMessage)) {
+        } else {
          // show form, hide chat
         mealPreferencesForm.style.display = 'block';
         if (chatContainer) chatContainer.classList.add('form-only');
