@@ -137,7 +137,7 @@ function skipMealForm() {
   // Show “open prefs” button so user can change mind
   if (openPreferencesButton) openPreferencesButton.style.display = 'inline-block';
 
-  addSystemNotice('You skipped the preferences form. You can chat now, or set preferences any time.');
+  addSystemNotice('Du hoppet over preferanseskjemaet. Du kan chatte nå, eller angi preferanser når som helst.');
 }
 
 function reopenMealForm() {
