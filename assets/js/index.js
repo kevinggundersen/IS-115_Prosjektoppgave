@@ -34,7 +34,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const skipFormButton = document.getElementById('skipFormButton');
     const openPreferencesButton = document.getElementById('openPreferencesButton');
 
-    let isSkipped = false;
 
     // Add click handlers to existing session items
     addSessionClickHandlers();
