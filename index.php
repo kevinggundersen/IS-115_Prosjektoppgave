@@ -287,8 +287,8 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
                     <button type="submit" id="sendPreferencesButton">Send inn preferanser</button>
 
                     <!-- Skip button (no submit) -->
-                    <button type="button" id="skipFormButton" class="btn-secondary">
-                        Skip for now
+                    <button type="button" id="skipFormButton">
+                        Skip for nå
                     </button>
 
 
