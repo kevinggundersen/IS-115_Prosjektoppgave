@@ -156,7 +156,9 @@ function reopenMealForm() {
   applyCollapsibleToFirstUserMessage();
 }
 
-// minimal system notice helper (no backend call)
+/**
+ * Minimal system notice helper (no backend call)
+ */
 function addSystemNotice(text) {
   if (!chatArea) return;
 
