@@ -302,12 +302,6 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
     </div>
 </body>
 
-<!-- 
-JavaScript for AJAX functionality and syntax highlighting
-This file is used to handle the AJAX functionality for the chat application,
-including sending messages, receiving responses, and updating the UI
-without page reloads.
--->
 <script src="assets/js/index.js"></script>
 
 </html>
