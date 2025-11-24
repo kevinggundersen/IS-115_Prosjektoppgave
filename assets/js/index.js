@@ -712,19 +712,19 @@ function loadSession(sessionId) {
         const skipped = sessionStorage.getItem('mealFormSkipped') === '1';
 
         if (hasConversationMessages || skipped) {
-         // show chat, hide form
-        mealPreferencesForm.style.display = 'none';
-        if (chatContainer) chatContainer.classList.remove('form-only');
-        if (chatForm) chatForm.style.display = 'block';
-        chatArea.style.display = 'block';
-        if (openPreferencesButton) openPreferencesButton.style.display = 'inline-block';
-        } else {
-         // show form, hide chat
-        mealPreferencesForm.style.display = 'block';
-        if (chatContainer) chatContainer.classList.add('form-only');
-        if (chatForm) chatForm.style.display = 'none';
-        chatArea.style.display = 'none';
-        if (openPreferencesButton) openPreferencesButton.style.display = 'none';
+            // show chat, hide form
+            mealPreferencesForm.style.display = 'none';
+            if (chatContainer) chatContainer.classList.remove('form-only');
+            if (chatForm) chatForm.style.display = 'block';
+            chatArea.style.display = 'block';
+            if (openPreferencesButton) openPreferencesButton.style.display = 'inline-block';
+        } else if (hasWelcomeMessage || (!hasConversationMessages && !hasWelcomeMessage)) {
+            // show form, hide chat
+            mealPreferencesForm.style.display = 'block';
+            if (chatContainer) chatContainer.classList.add('form-only');
+            if (chatForm) chatForm.style.display = 'none';
+            chatArea.style.display = 'none';
+            if (openPreferencesButton) openPreferencesButton.style.display = 'none';
     }
 }
 
