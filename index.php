@@ -288,7 +288,7 @@ $currentSessionId = $_SESSION['current_session_id'] ?? null;
 
                     <!-- Skip button (no submit) -->
                     <button type="button" id="skipFormButton">
-                        Skip for nå
+                        Hopp over for nå
                     </button>
 
 
